@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>HeartMade Gifting Atelier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Pinyon+Script&display=swap" rel="stylesheet">
+<style>
+/* VOICE: Patchi boutique counter — calm, assured, generous with space; quiet luxury, never loud.
+   IDEA: the tablet behaves like patchi.com set on a counter: ivory page, slim header with text navigation, square product tiles.
+   PICTURE: each screen's working surface (cards, tray, gift preview) fills the content band under the header.
+   COLOUR and TYPE: ivory #f5f0e9 ground, forest #1e3b2c ink, sage #6e8b6f hero panels, mint tint for selection, a touch of orange only for warnings; Jost light headings + Jost text.
+   LAYOUT: header 72px · left-aligned title · content band · hairline footer with Back left, primary action right. */
+:root{--ivory:#f5f0e9;--paper:#fbf9f5;--forest:#1e3b2c;--ink:#1e3b2c;--body:#4b5a4f;--muted:#7f877f;--sage:#6e8b6f;--sage2:#97b994;--mint:#e5ede1;--tile:#ede6db;--line:rgba(30,59,44,.15);--line2:rgba(30,59,44,.28);--warn:#c8652e;--gold:#b8934a;--goldl:#d9bd7c;color-scheme:light}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#d9d3c9}
+body{font:16px/1.5 Jost,'Helvetica Neue',Arial,sans-serif;color:var(--ink);-webkit-user-select:none;user-select:none;-webkit-font-smoothing:antialiased}
+img{-webkit-user-drag:none;user-drag:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation;padding:0}
+input,textarea{-webkit-user-select:text;user-select:text;font-family:Jost,sans-serif}
+#app{position:fixed;inset:0;display:flex}
+.pane{position:relative;flex:1;overflow:hidden;display:none}
+.m-customer #paneC,.m-host #paneE,.m-split .pane{display:block}
+.m-split .pane+.pane{border-left:1px solid #b9b2a6}
+.stage{position:absolute;left:0;top:0;width:1180px;height:820px;transform-origin:0 0;overflow:hidden;background:var(--ivory)}
+.scr{position:absolute;inset:0;overflow:hidden;background:var(--ivory)}
+.page::after{content:"";position:absolute;left:48px;right:48px;top:728px;height:1px;background:var(--line)}
+svg{display:block}
+
+/* header — like patchi.com's top bar */
+.hdr{position:absolute;left:0;right:0;top:0;height:72px;display:flex;align-items:center;padding:0 24px 0 48px;border-bottom:1px solid var(--forest);background:var(--ivory);z-index:4}
+.brand{display:flex;align-items:center;gap:12px;white-space:nowrap}
+.brand img{width:30px;height:30px}
+.brand b{font-weight:500;font-size:20px;letter-spacing:.01em}
+.brand span{font-weight:300;font-size:17px;color:var(--body)}
+.nav{margin-left:auto;display:flex;align-items:stretch;height:72px;gap:26px;margin-right:22px}
+.nv{display:flex;align-items:center;font-size:14.5px;font-weight:400;color:var(--ink);opacity:.38;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.nv.done{opacity:.85}.nv.cl{cursor:pointer}
+.nv.cur{opacity:1;font-weight:500;border-bottom-color:var(--forest)}
+.staff{display:flex;gap:4px;margin-left:auto}
+.nav+.staff{margin-left:0}
+.staff button{width:42px;height:42px;display:grid;place-items:center;color:var(--ink);opacity:.6}
+.staff svg{width:20px;height:20px}
+
+/* titles */
+.ttl{position:absolute;left:48px;top:100px;margin:0;font-weight:300;font-size:38px;line-height:1.12;letter-spacing:-.005em;color:var(--forest)}
+.sub{position:absolute;left:48px;top:150px;margin:0;font-size:16.5px;color:var(--body)}
+.note{position:absolute;left:48px;top:176px;margin:0;font-size:13.5px;color:var(--muted)}
+.ttl+.sub+.note{top:174px}
+
+/* footer actions */
+.btn{position:absolute;right:48px;bottom:20px;height:54px;padding:0 30px;background:var(--forest);color:var(--ivory);font-weight:500;font-size:16px;letter-spacing:.01em;display:flex;align-items:center;gap:14px;border-radius:1px;transition:opacity .2s,background .2s}
+.btn:active{background:#2c5040}
+.btn.dis{opacity:.3}
+.btn svg{width:22px}
+.back{position:absolute;left:36px;bottom:22px;height:50px;padding:0 12px;display:flex;align-items:center;gap:10px;font-size:15.5px;color:var(--ink)}
+.back svg{width:18px}
+.fnote{position:absolute;left:0;right:0;bottom:38px;text-align:center;font-size:12.5px;color:var(--muted);pointer-events:none}
+
+/* cards — flat, hairline, square */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:2px;position:relative;transition:border-color .2s,background .2s}
+.card.on{border-color:var(--forest);box-shadow:inset 0 0 0 1px var(--forest);background:#fff}
+button.card:active{background:#f3efe7}
+.tile{background:var(--tile);display:grid;place-items:center;flex:none}
+.tile img{object-fit:contain;filter:drop-shadow(0 6px 6px rgba(60,40,20,.16))}
+.chk,.ringon,.ring{position:absolute;right:12px;top:12px;width:24px;height:24px;display:grid;place-items:center}
+.chk,.ringon{background:var(--forest);animation:pop .25s}
+.chk svg,.ringon svg{width:15px;height:15px}
+.ring{border:1px solid var(--line2);background:var(--paper)}
+@keyframes pop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@keyframes breathe{50%{opacity:.4}}
+
+/* welcome hero — split like the patchi.com banner */
+.hero{position:absolute;left:0;right:0;top:72px;bottom:0;display:flex}
+.hero-t{width:600px;background:var(--sage);color:#f7f3ec;padding:92px 64px 0 56px;position:relative}
+.hero-i{flex:1;overflow:hidden;background:#2c3320}
+.hero-i img{width:100%;height:100%;object-fit:cover;object-position:50% 72%;display:block}
+.hero-k{font-size:14px;letter-spacing:.02em;color:rgba(247,243,236,.78)}
+.hero-h{margin:18px 0 0;font-weight:300;font-size:60px;line-height:1.04;letter-spacing:-.01em;text-wrap:balance}
+.hero-p{margin:24px 0 0;max-width:440px;font-size:17.5px;line-height:1.6;color:rgba(247,243,236,.86)}
+.hero-b{margin-top:42px;display:inline-flex;align-items:center;gap:16px;height:58px;padding:0 32px;background:#fbf9f5;color:var(--forest);font-weight:500;font-size:16.5px;border-radius:1px}
+.hero-b svg{width:22px}
+.hero-b:active{background:#ece6db}
+.hero-f{position:absolute;left:56px;right:64px;bottom:34px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(247,243,236,.3);padding-top:16px;font-size:14px;color:rgba(247,243,236,.8)}
+.hero-f button{display:flex;align-items:center;gap:8px;color:#f7f3ec;font-size:14.5px;padding:6px 0 6px 10px}
+.hero-f svg{width:16px}
+.tapl{animation:breathe 2.8s ease-in-out infinite}
+.steps{margin-top:30px;display:flex;flex-direction:column;gap:12px}
+.sp{display:flex;align-items:center;gap:14px;font-size:16px;color:rgba(247,243,236,.6)}
+.sp i{width:24px;height:24px;border:1px solid rgba(247,243,236,.6);display:grid;place-items:center}
+.sp i svg{width:14px}
+.sp.ok{color:#f7f3ec}.sp.ok i{background:#f7f3ec;border-color:#f7f3ec}
+.sp.ok i svg path{stroke:var(--forest)}
+.sp.now i{animation:breathe 1.6s infinite;border-color:#f7f3ec}
+.ono{margin-top:22px;font-size:15px;color:rgba(247,243,236,.85)}
+.ono b{font-weight:500;font-size:22px;letter-spacing:.04em;color:#fff;margin-left:6px}
+
+/* flavor */
+.fgrid{position:absolute;left:48px;top:206px;width:1084px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.fcard{height:128px;display:flex;align-items:center;gap:20px;padding:9px;text-align:left}
+.fcard .tile{width:108px;height:108px}
+.fcard .tile img{width:84px;height:70px}
+.fcard span{font-size:19px;font-weight:400;line-height:1.2}
+.avoid{position:absolute;left:48px;top:498px}
+.avoid h3{margin:0 0 4px;font-weight:400;font-size:19px}
+.avoid p{margin:0 0 14px;font-size:14px;color:var(--muted)}
+.chips{display:flex;gap:12px}
+.chip{height:48px;padding:0 26px;border:1px solid var(--line2);background:var(--paper);font-size:15.5px;border-radius:1px;transition:all .2s}
+.chip.on{background:var(--forest);border-color:var(--forest);color:var(--ivory)}
+
+/* pick */
+.pgrid{position:absolute;left:48px;top:212px;width:1084px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.pcard{height:150px;display:flex;align-items:center;gap:18px;padding:9px;text-align:left}
+.pcard .tile{width:130px;height:130px}
+.pcard .tile img{width:104px}
+.pcard .pt{display:flex;flex-direction:column;gap:6px;padding-right:30px}
+.pcard em{font-style:normal;font-size:12.5px;font-weight:500;color:var(--sage)}
+.pcard b{font-weight:400;font-size:19px;line-height:1.2}
+.empty{position:absolute;left:48px;top:212px;font-size:18px;color:var(--body);max-width:620px}
+
+/* tasting */
+.tast{position:absolute;left:48px;top:200px;width:480px;height:510px}
+.tast .tile{width:100%;height:100%}
+.heroc{width:300px;animation:rise .45s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+.tinfo{position:absolute;left:560px;top:204px;width:572px}
+.tinfo .cnt{font-size:13.5px;color:var(--muted)}
+.tinfo h3{margin:6px 0 12px;font-weight:300;font-size:40px;line-height:1.1}
+.tinfo p{margin:0;font-size:17.5px;line-height:1.55;color:var(--body);max-width:520px}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.tag{font-size:13px;padding:4px 10px;border:1px solid var(--line2);color:var(--body)}
+.tag.al{border-color:rgba(200,101,46,.45);color:#9c4b1f}
+.react{position:absolute;left:560px;top:528px;width:572px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.rcard{height:132px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-size:16px;line-height:1.25;text-align:center}
+.rcard svg{width:30px;height:30px}
+.rcard.on{background:var(--forest);color:var(--ivory);border-color:var(--forest);box-shadow:none}
+.rlbl{position:absolute;left:560px;top:500px;font-size:13.5px;color:var(--muted)}
+.tstrip{position:absolute;left:168px;bottom:18px;display:flex;gap:8px;align-items:center}
+.tth{width:58px;height:58px;background:var(--tile);position:relative;display:grid;place-items:center;border:1px solid transparent}
+.tth img{width:44px}
+.tth.cur{border-color:var(--forest);box-shadow:inset 0 0 0 1px var(--forest)}
+.tth i{position:absolute;right:-5px;top:-5px;width:20px;height:20px;display:grid;place-items:center;background:var(--paper);border:1px solid var(--line)}
+.tth i svg{width:12px;height:12px}
+
+/* favorites */
+.fvrow{position:absolute;left:48px;top:206px;display:flex;gap:14px}
+.fv{width:208px;height:252px;display:flex;flex-direction:column;padding:8px;text-align:left}
+.fv .tile{width:100%;height:182px}
+.fv .tile img{width:132px}
+.fv b{font-weight:400;font-size:17px;line-height:1.2;padding:10px 4px 0}
+.fv:not(.on){opacity:.6}
+.fvrow.many .fv{width:170px;height:226px}.fvrow.many .fv .tile{height:156px}.fvrow.many .fv .tile img{width:104px}
+.mayb{position:absolute;left:48px;top:484px;display:flex;align-items:center;gap:10px;font-size:15px;color:var(--body)}
+.mb{display:flex;align-items:center;gap:10px;height:50px;padding:0 16px 0 6px;border:1px solid var(--line2);background:var(--paper);font-size:15px}
+.mb img{width:38px;height:38px;object-fit:contain;background:var(--tile)}
+.mb.on{border-color:var(--forest);box-shadow:inset 0 0 0 1px var(--forest)}
+.addmore{position:absolute;left:48px;top:560px;height:50px;padding:0 24px;border:1px solid var(--forest);font-size:15.5px;display:flex;align-items:center;gap:10px}
+
+/* box */
+.bgrid{position:absolute;left:48px;top:206px;width:1084px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.bcard{height:330px;display:flex;flex-direction:column;padding:8px;text-align:left}
+.bcard .tile{height:246px;width:100%;background:#f1e9dc}
+.bcard .tile img{width:250px;height:200px;filter:none}
+.bcard .bt{display:flex;justify-content:space-between;align-items:baseline;padding:14px 8px 0}
+.bcard b{font-weight:400;font-size:20px}
+.bcard small{font-size:14px;color:var(--muted)}
+.bprev{position:absolute;left:48px;top:556px;width:1084px;height:150px;display:flex;align-items:center;gap:24px;padding:0 24px;font-size:15.5px;line-height:1.55;color:var(--body)}
+.bprev b{font-weight:500;color:var(--ink)}
+
+/* tray / box top view (product rendering) */
+.bxw{position:relative;flex:none}
+.bx{position:absolute;left:0;top:0;transform-origin:0 0}
+.bx-tray{border-radius:50%;background:radial-gradient(circle closest-side at 50% 50%,#e8c873 0%,#c79b45 55%,#9c7428 74%,#f4f1ea 75.5%,#fff 82%,#e3ddd2 92%,#b78f3f 93%,#d7b766 97%,#9c7428 100%);box-shadow:0 12px 24px rgba(70,50,20,.18)}
+.bx-classic{border-radius:6px;background:linear-gradient(#f6eddc,#eadcc2);box-shadow:0 10px 22px rgba(80,60,30,.16),inset 0 0 0 3px #c9a55a,inset 0 0 0 9px #f3e8d4,inset 0 6px 16px 9px rgba(120,90,40,.2)}
+.bx-celebration{border-radius:6px;background:radial-gradient(circle at 40% 30%,#56623b,#38411f 70%);box-shadow:0 12px 24px rgba(50,40,20,.2),inset 0 0 0 4px #c9a55a,inset 0 0 0 12px #f3ead8,inset 0 0 0 14px #c9a55a,inset 0 8px 20px 14px rgba(0,0,0,.25)}
+.cup{position:absolute;width:60px;height:60px;border-radius:12px;background:radial-gradient(circle,#4c2f1d 0 48%,transparent 49%),repeating-conic-gradient(#3b2416 0 7deg,#57371f 7deg 14deg);box-shadow:inset 0 2px 6px rgba(0,0,0,.45),0 1px 0 rgba(255,255,255,.35);transition:box-shadow .2s,transform .2s}
+.bx-tray .cup{width:56px;height:56px;border-radius:50%}
+.cup img{position:absolute;left:50%;top:50%;width:96%;transform:translate(-50%,-54%);filter:drop-shadow(0 4px 3px rgba(0,0,0,.4));pointer-events:auto;touch-action:none}
+.cup.sel{box-shadow:0 0 0 3px #fff,0 0 0 5px var(--forest),inset 0 2px 6px rgba(0,0,0,.45);z-index:2}
+.cup.hot{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--sage2);transform:scale(1.08);z-index:3}
+.cup.pop img{animation:drop .38s cubic-bezier(.2,1.4,.4,1)}
+@keyframes drop{from{transform:translate(-50%,-110%) scale(1.35);opacity:0}}
+
+/* create */
+.tools{position:absolute;right:48px;top:110px;display:flex;gap:8px}
+.tl{height:42px;padding:0 18px;border:1px solid var(--line2);background:var(--paper);font-size:14.5px;display:inline-flex;align-items:center;gap:8px}
+.cl-left{position:absolute;left:48px;top:196px;width:620px;height:432px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hint{margin-top:12px;font-size:14px;color:var(--muted);text-align:center;min-height:46px;display:flex;align-items:center}
+.selbar{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--forest);padding:5px 6px 5px 8px;font-size:14px;color:var(--body);animation:pop .2s}
+.selbar img{width:34px;height:34px;object-fit:contain;background:var(--tile)}
+.selbar b{font-weight:500;color:var(--ink)}
+.sb{height:34px;padding:0 14px;border:1px solid var(--line2);font-size:13.5px;font-weight:500}
+.sb.dk{background:var(--forest);color:var(--ivory);border-color:var(--forest)}
+.panel{position:absolute;right:48px;top:196px;width:448px;max-height:432px;overflow-y:auto;scrollbar-width:none;padding:6px 16px 10px}
+.panel::-webkit-scrollbar{display:none}
+.panel h3{margin:8px 0 6px;font-weight:400;font-size:20px}
+.sec{font-size:12.5px;color:var(--muted);margin:12px 0 4px}
+.prow{display:flex;align-items:center;gap:14px;padding:5px 0;border-top:1px solid var(--line);touch-action:pan-y;transition:background .2s}
+.prow.rep{background:var(--mint)}
+.prow img{width:46px;height:42px;object-fit:contain;background:var(--tile);pointer-events:none}
+.prow span{flex:1;font-size:16px;line-height:1.2}
+.stp{display:flex;align-items:center;border:1px solid var(--line2);background:var(--paper)}
+.stp button{width:42px;height:38px;font-size:20px;line-height:1;color:var(--ink)}
+.stp b{width:30px;text-align:center;font-weight:500;font-size:16px;font-variant-numeric:tabular-nums}
+.stp .off{opacity:.25}
+.stats{position:absolute;left:48px;top:642px;height:74px;max-width:470px;display:flex;align-items:center;gap:20px;padding:0 22px}
+.st{display:flex;align-items:center;gap:12px}
+.st svg{width:28px;height:28px;color:var(--sage)}
+.st small{display:flex;gap:10px;align-items:center;font-size:12.5px;color:var(--muted)}
+.st b{display:block;font-weight:400;font-size:24px;line-height:1.15;white-space:nowrap;font-variant-numeric:tabular-nums}
+.eye{font-size:12px;padding:1px 8px;border:1px solid var(--line2);color:var(--body)}
+.vr{width:1px;height:42px;background:var(--line2)}
+.bud{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;white-space:nowrap}
+.bud button{text-decoration:underline;font-size:12px;color:var(--body)}
+.bud .ok{color:#3f6b33}.bud .ov{color:var(--warn)}
+.fill{position:absolute;left:560px;top:656px;width:300px;display:flex;align-items:center;gap:12px;font-size:14px;white-space:nowrap;color:var(--body)}
+.bar{flex:1;height:6px;background:rgba(30,59,44,.1);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--forest);transition:width .35s cubic-bezier(.3,1.3,.5,1)}
+.bar.full i{background:var(--sage)}
+.fillsub{position:absolute;left:560px;top:684px;font-size:13px;color:var(--muted)}
+
+/* personalize */
+.pv{position:absolute;left:48px;top:196px;width:520px;height:384px;background:var(--tile)}
+.pv svg{width:100%;height:100%}
+.pv .cap{position:absolute;left:14px;top:12px;font-size:12.5px;color:var(--body)}
+.acc{position:absolute;right:48px;top:196px;width:548px;display:flex;flex-direction:column;gap:10px}
+.acc .card.on{box-shadow:none;border-color:var(--line2);background:#fff}
+.ah{display:flex;align-items:center;gap:16px;width:100%;height:66px;padding:0 18px 0 9px;text-align:left}
+.ah img{width:76px;height:48px;object-fit:contain;background:var(--tile)}
+.ah b{font-weight:400;font-size:19px;flex:1}
+.ah small{font-size:14px;color:var(--muted)}
+.ah::after{content:"";width:8px;height:8px;border-right:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);transform:rotate(45deg);margin:-4px 2px 0 6px;transition:transform .2s}
+.on>.ah::after{transform:rotate(-135deg);margin-top:4px}
+.ab{padding:2px 18px 16px}
+.sw{display:flex;gap:10px;flex-wrap:wrap}
+.swb{display:flex;flex-direction:column;align-items:center;gap:6px;width:92px;font-size:13px;text-align:center;line-height:1.2;color:var(--body)}
+.swb i{width:48px;height:48px;border:1px solid var(--line2);transition:box-shadow .2s}
+.swb.on{color:var(--ink);font-weight:500}
+.swb.on i{box-shadow:0 0 0 2px var(--paper),0 0 0 3px var(--forest)}
+.cdc{display:flex;gap:8px;margin-bottom:10px}
+.cdc button{flex:1;height:40px;border:1px solid var(--line2);font-size:14px}
+.cdc button.on{background:var(--forest);color:var(--ivory);border-color:var(--forest)}
+.msg{width:100%;height:68px;resize:none;border:1px solid var(--line2);border-radius:0;background:#fff;padding:9px 12px;font-size:19px;line-height:1.35;color:var(--ink)}
+.mrow{display:flex;gap:8px;margin-top:8px}
+.mrow input{flex:1;height:44px;border:1px solid var(--line2);border-radius:0;background:#fff;padding:0 12px;font-size:19px;color:var(--ink)}
+.mrow button{padding:0 14px;border:1px solid var(--line2);font-size:13.5px;white-space:nowrap}
+.msg:focus,.mrow input:focus{outline:none;border-color:var(--forest)}
+.ctr{font-size:12px;color:var(--muted);text-align:right;margin-top:4px}
+.fbar{position:absolute;left:48px;top:596px;width:520px;height:66px;display:flex;align-items:center;gap:16px;padding:0 20px;font-size:15px;color:var(--body);white-space:nowrap}
+.fbar b{font-weight:400;font-size:24px;color:var(--ink);font-variant-numeric:tabular-nums}
+.fbar .pc{margin-left:auto}
+
+/* review */
+.rvl{position:absolute;left:48px;top:196px;width:450px;height:514px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;background:var(--tile);border:0}
+.cnts{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:18px}
+.cnts span{display:flex;align-items:center;gap:6px;font-size:13.5px;background:var(--paper);padding:3px 10px 3px 4px}
+.cnts img{width:26px}
+.rvr{position:absolute;left:518px;top:196px;width:614px;height:514px;padding:4px 24px;overflow:hidden}
+.rr{display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--line)}
+.rr:last-child{border:0}
+.rr .k{width:116px;font-size:13.5px;color:var(--muted);flex:none}
+.rr .v{flex:1;font-size:16.5px;line-height:1.4}
+.rr .v i{font-style:italic;color:var(--body)}
+.rr small{font-size:12px;color:var(--muted)}
+.ed{height:34px;padding:0 14px;border:1px solid var(--line2);font-size:13.5px}
+.sws{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:6px;border:1px solid var(--line2)}
+.warn{font-size:13.5px;color:#9c4b1f;margin-top:4px}
+
+
+/* vector artwork */
+.lg{display:block;width:30px;height:30px;color:var(--forest)}.lg svg{width:100%;height:100%}
+.tile.ic{color:var(--forest)}.fcard .tile.ic svg{width:62px;height:62px}
+.ah .tile.ic{width:64px;height:48px}.ah .tile.ic svg{width:40px;height:40px}
+.bcard .tile.bxart svg{width:100%;height:100%;padding:10px 8px 0}
+.tile img{filter:none}
+.cup img{width:104%;transform:translate(-50%,-50%);filter:none}
+.hero-i{flex:1;position:relative;overflow:hidden;background:#e9e2d6}
+.hero-tray{position:absolute;left:96px;top:96px}
+.hero-loose{position:absolute;left:34px;bottom:36px;display:flex;gap:6px}
+.hero-loose img{width:120px}
+.hero-rb{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+/* host console */
+.host{position:absolute;inset:0;background:var(--ivory)}
+.hh{position:absolute;left:0;right:0;top:0;height:72px;border-bottom:1px solid var(--forest);display:flex;align-items:center;gap:14px;padding:0 20px 0 32px;color:var(--ink)}
+.hh img{width:28px}
+.hh .t{font-weight:500;font-size:18px;line-height:1.15}
+.hh .t small{display:block;font-weight:400;font-size:13px;color:var(--muted)}
+.hh .sp2{flex:1}
+.sync{font-size:13px;padding:6px 12px;border:1px solid var(--line2);display:flex;align-items:center;gap:8px;color:var(--body)}
+.sync::before{content:"";width:8px;height:8px;border-radius:50%;background:#b9b29b}
+.sync.live::before{background:#4f9a3c}
+.hb{height:40px;padding:0 16px;border:1px solid var(--forest);color:var(--forest);font-weight:500;font-size:14px;background:transparent}
+.hb.dk{background:var(--forest);color:var(--ivory)}
+.hb.gold{background:var(--sage);border-color:var(--sage);color:#fff}
+.hm{width:40px;height:40px;display:grid;place-items:center;opacity:.7}
+.hm svg{width:20px}
+.hcols{position:absolute;left:24px;right:24px;top:88px;bottom:16px;display:grid;grid-template-columns:292px minmax(0,1fr) minmax(0,1fr);gap:14px}
+.hcol{display:flex;flex-direction:column;gap:14px;overflow-y:auto;scrollbar-width:none;padding-bottom:4px}
+.hcol::-webkit-scrollbar{display:none}
+.hc{background:var(--paper);border:1px solid var(--line);padding:14px 16px}
+.hc h4{margin:0 0 10px;font-weight:500;font-size:16px;display:flex;align-items:center;gap:8px}
+.hc h4 span{flex:1}
+.hc h4 small{font-size:12.5px;color:var(--muted);font-weight:400}
+.hc h4 .hb{height:30px;padding:0 10px;font-size:12.5px}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:3px 0}
+.kv span{color:var(--muted)}
+.kv b{font-weight:500;text-align:right}
+.jr{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:14px;color:#9aa09a}
+.jr i{width:10px;height:10px;border:1px solid #b9bdb7;flex:none}
+.jr.ok{color:var(--ink)}.jr.ok i{background:var(--forest);border-color:var(--forest)}
+.jr.now{color:var(--ink);font-weight:500}.jr.now i{background:var(--sage2);border-color:var(--sage);animation:breathe 1.6s infinite}
+.jr em{margin-left:auto;font-style:normal;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.hchips{display:flex;flex-wrap:wrap;gap:6px}
+.hchip{font-size:13px;padding:3px 10px;background:var(--mint);color:var(--forest)}
+.hchip.al{background:#f6e3d6;color:#9c4b1f}
+.none{font-size:13.5px;color:#9a9f98;font-style:italic}
+.req{background:var(--mint);border-left:3px solid var(--forest);padding:9px 12px;margin-bottom:8px;font-size:14px;display:flex;align-items:center;gap:10px}
+.req b{flex:1;font-weight:500}
+.req .hb{height:32px;font-size:12.5px}
+.tr{display:flex;align-items:center;gap:10px;padding:5px 0;border-top:1px solid var(--line);font-size:14px}
+.tr img{width:32px;height:32px;object-fit:contain;background:var(--tile)}
+.tr span{flex:1}
+.rx{font-size:12.5px;font-weight:500;padding:2px 9px}
+.rx.love{background:var(--mint);color:#2f5a2a}.rx.maybe{background:#f3ecd9;color:#7a5f1d}.rx.no{background:#f6e3d6;color:#9c4b1f}.rx.wait{background:#eeeae2;color:#9a9f98}
+.lock{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);background:var(--ivory);padding:8px 10px;margin-top:4px}
+.lock svg{width:16px;flex:none}
+.ticket{border:1px dashed var(--line2);padding:10px 12px;margin-top:10px;font-size:14px}
+.ticket li{margin:3px 0}
+.bigp{font-weight:300;font-size:34px;font-variant-numeric:tabular-nums}
+.hact{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+
+/* overlays */
+#ghost{position:fixed;left:0;top:0;width:78px;pointer-events:none;z-index:50;display:none;filter:drop-shadow(0 12px 10px rgba(0,0,0,.3))}
+#toast{position:fixed;left:50%;top:9%;transform:translate(-50%,-30px);background:var(--forest);color:var(--ivory);padding:12px 22px;font-size:15px;opacity:0;transition:all .3s;z-index:60;display:flex;gap:16px;align-items:center;max-width:90vw;pointer-events:none}
+#toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#toast button{color:var(--sage2);font-weight:500;text-decoration:underline}
+#modal{position:fixed;inset:0;z-index:70;display:none;place-items:center;background:rgba(30,40,32,.4)}
+#modal.show{display:grid}
+.mbox{background:var(--paper);padding:28px 30px;width:min(520px,92vw);max-height:90vh;overflow:auto;border-top:3px solid var(--forest)}
+.mbox h3{margin:0 0 6px;font-weight:300;font-size:28px}
+.mbox p{margin:0 0 16px;color:var(--body);font-size:15px}
+.ml{display:flex;flex-direction:column;gap:8px}
+.mi{display:flex;align-items:center;text-align:left;padding:12px 16px;border:1px solid var(--line2);font-size:16px}
+.mi.on{background:var(--forest);color:var(--ivory);border-color:var(--forest)}
+.mi small{display:block;font-size:13px;opacity:.72}
+.mact{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.mbtn{height:46px;padding:0 22px;border:1px solid var(--forest);font-weight:500}
+.mbtn.dk{background:var(--forest);color:var(--ivory)}
+.mchips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 16px}
+.mchips button{height:40px;padding:0 16px;border:1px solid var(--line2);font-size:14.5px}
+.mchips button.on{background:var(--forest);color:var(--ivory);border-color:var(--forest)}
+.mbox label{font-size:13px;color:var(--muted)}
+.mbox input{width:100%;height:46px;border:1px solid var(--line2);background:#fff;padding:0 12px;font-size:17px;margin:6px 0 4px}
+.mbox textarea{width:100%;height:220px;font:13px/1.4 ui-monospace,monospace;border:1px solid var(--line2);padding:10px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app" class="m-customer">
+  <div class="pane" id="paneC"><div class="stage" id="cust"></div></div>
+  <div class="pane" id="paneE"><div class="stage" id="emp"></div></div>
+</div>
+<img id="ghost" alt="">
+<div id="toast" role="status"></div>
+<div id="modal"></div>
+<script>
+{
+// ---------- data (sample values for testing — simulated, not official Patchi prices) ----------
+const FL=[{id:'soft',n:'Soft & Nostalgic'},{id:'rich',n:'Rich & Classic'},{id:'nutty',n:'Nutty & Crunchy'},{id:'fruity',n:'Bright & Fruity'},{id:'floral',n:'Floral & Delicate'},{id:'bold',n:'Bold & Adventurous'}];
+const FLM=Object.fromEntries(FL.map(f=>[f.id,f.n]));
+const AV=[{id:'nuts',n:'Nuts'},{id:'dairy',n:'Dairy- free'},{id:'sugar',n:'Sugar conscious'}];
+const CH=[
+ {id:'pistachio',n:'Pistachio Praline',d:'A smooth chocolate with roasted pistachio and a velvety finish.',fl:['nutty','soft'],nuts:1,dairy:1,sugar:'med',g:13,p:7.5},
+ {id:'raspberry',n:'Raspberry Honey',d:'White chocolate ganache with raspberry and a drizzle of wildflower honey.',fl:['fruity','floral'],dairy:1,sugar:'high',g:12,p:7},
+ {id:'caramel',n:'Salted Caramel',d:'A milk chocolate shell around a soft caramel heart, finished with sea-salt flakes.',fl:['rich','soft'],dairy:1,sugar:'high',g:12,p:7},
+ {id:'dark',n:'Dark Cacao',d:'A deep 64% dark ganache — round, gently bitter, and dairy-free.',fl:['rich','bold'],sugar:'low',g:11,p:7.5},
+ {id:'hazelnut',n:'Hazelnut Crunch',d:'Milk gianduja rolled in caramelised hazelnut pieces for a satisfying crunch.',fl:['nutty','rich'],nuts:1,dairy:1,sugar:'med',g:14,p:7.5},
+ {id:'orange',n:'Orange Zest',d:'Dark chocolate with candied orange peel and a bright citrus ganache.',fl:['fruity','bold'],sugar:'med',g:12,p:7},
+ {id:'date',n:'Date & Cardamom',d:'Milk chocolate filled with Khalas date paste and a warm hint of cardamom.',fl:['soft','rich'],dairy:1,sugar:'med',g:14,p:7.5},
+ {id:'rose',n:'Rose Ganache',d:'A delicate rose-water ganache made with coconut cream — light and floral.',fl:['floral','soft'],sugar:'med',g:11,p:8},
+ {id:'saffron',n:'Saffron Caramel',d:'Caramel infused with saffron threads beneath a milk chocolate shell.',fl:['bold','floral'],dairy:1,sugar:'high',g:12,p:8.5},
+ {id:'sfdark',n:'70% Sugar-Free Dark',d:'Intense 70% dark chocolate with no added sugar and a clean cacao finish.',fl:['bold','rich'],sugar:'low',g:10,p:8}
+];
+const CHM=Object.fromEntries(CH.map(c=>[c.id,c]));
+const BX={classic:{n:'Classic Box',cap:16,base:40,W:600,H:190,desc:'two neat rows of eight'},tray:{n:'Signature Tray',cap:24,base:60,W:460,H:460,desc:'three concentric rings'},celebration:{n:'Celebration Box',cap:36,base:85,W:460,H:460,desc:'a six-by-six grid on olive velvet'}};
+const BXO=['classic','tray','celebration'];
+const WR=[{id:'cream',n:'Atelier Cream',c:'#efe3cb'},{id:'olive',n:'Olive Velvet',c:'#4d5a33'},{id:'gold',n:'Gold Foil',c:'#c9a55a'},{id:'blush',n:'Blush Linen',c:'#e8c6bd'}];
+const RB=[{id:'olive',n:'Olive Satin',c:'#6f7d3c'},{id:'gold',n:'Gold',c:'#c49a45'},{id:'ivory',n:'Ivory',c:'#f6eedf'},{id:'burgundy',n:'Burgundy',c:'#7a2632'},{id:'blush',n:'Blush',c:'#d9a3a0'}];
+const CD=[{id:'ivory',n:'Ivory Classic'},{id:'gold',n:'Gold-Edged'},{id:'floral',n:'Pressed Flower'}];
+const REC={Mother:{s:'Mom',pp:'her'},Father:{s:'Dad',pp:'his'},Wife:{s:'your wife',pp:'her'},Husband:{s:'your husband',pp:'his'},Sister:{s:'your sister',pp:'her'},Brother:{s:'your brother',pp:'his'},Friend:{s:'your friend',pp:'their'},Colleague:{s:'your colleague',pp:'their'}};
+const OCC=['Birthday',"Mother's Day",'Eid','Anniversary','Graduation','Thank You','Just Because'];
+const ST=['attract','welcome','flavor','pick','tasting','favorites','box','create','personalize','review','done'];
+const STN={attract:'Welcome screen',welcome:'Introduction',flavor:'Flavor profile',pick:'Tasting selection',tasting:'Guided tasting',favorites:'Favorites',box:'Arrangement',create:'Create the gift',personalize:'Personalize',review:'Review',done:'Confirmed'};
+const DOTS=['flavor','pick','tasting','favorites','box','create','personalize'];
+const MSGS=n=>[`Happy Birthday, ${n==='Mom'?'Mama':n} — every sweet moment started with you.`,'To the heart of our home. With all my love, today and always.','Thank you for everything you are. Enjoy every piece!'];
+
+// ---------- icons ----------
+const I={
+ check:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+ heart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-9-9.3C2 7.4 4.2 4.5 7.3 4.5c2 0 3.6 1.1 4.7 2.8 1.1-1.7 2.7-2.8 4.7-2.8 3.1 0 5.3 2.9 4.3 6.2C19.5 15.4 12 20 12 20z"/></svg>',
+ heartf:'<svg viewBox="0 0 24 24" fill="#5c7a35"><path d="M12 20s-7.5-4.6-9-9.3C2 7.4 4.2 4.5 7.3 4.5c2 0 3.6 1.1 4.7 2.8 1.1-1.7 2.7-2.8 4.7-2.8 3.1 0 5.3 2.9 4.3 6.2C19.5 15.4 12 20 12 20z"/></svg>',
+ thumb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M7 10.5V20H4v-9.5h3zm0 0l4-7c1.6 0 2.6 1.2 2.2 2.8L12.6 9H19c1.2 0 2 1.1 1.7 2.2l-1.9 7C18.6 19.3 17.7 20 16.6 20H7"/></svg>',
+ thumbs:'<svg viewBox="0 0 24 24" fill="#a17b22"><path d="M7 10.5V20H4v-9.5h3zm1 0l4-7c1.6 0 2.6 1.2 2.2 2.8L13.6 9H19c1.2 0 2 1.1 1.7 2.2l-1.9 7c-.2 1.1-1.1 1.8-2.2 1.8H8z"/></svg>',
+ x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>',
+ xs:'<svg viewBox="0 0 24 24" fill="none" stroke="#a2412a" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+ arrow:'<svg viewBox="0 0 30 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h23M18 4l8 8-8 8"/></svg>',
+ back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H5M11 5l-7 7 7 7"/></svg>',
+ restart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"/></svg>',
+ menu:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+ bag:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 10a4 4 0 0 1 8 0M7 10h18l2 17H5z"/></svg>',
+ coins:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="13" cy="9" rx="8" ry="3"/><path d="M5 9v4c0 1.7 3.6 3 8 3s8-1.3 8-3V9M5 13v4c0 1.7 3.6 3 8 3M5 17v4c0 1.7 3.6 3 8 3"/><ellipse cx="21" cy="19" rx="7" ry="2.6"/><path d="M14 19v4c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6v-4"/></svg>',
+ lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+ dot:'<svg viewBox="0 0 24 24" fill="#9a927c"><circle cx="12" cy="12" r="3"/></svg>'
+};
+
+// ---------- state ----------
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const rid=()=>Math.random().toString(36).slice(2,7).toUpperCase();
+function fresh(k){const now=Date.now();return{v:1,rev:0,ts:now,sid:rid(),recipient:(k&&k.recipient)||'Mother',occasion:(k&&k.occasion)||'Birthday',guest:(k&&k.guest)||'',stage:'attract',maxIdx:0,startedAt:now,times:{attract:now},flavors:[],avoid:[],tastePick:[],tasteIdx:0,reactions:{},favorites:[],box:null,slots:[],wrap:'cream',ribbon:'olive',card:'ivory',message:'',from:'',status:'active',order:'',confirmedAt:0,tastingReq:false,tastingServed:false,sentAt:0,readyAt:0}}
+function sanitize(d){
+  const f=fresh();
+  for(const k in f){const v=d[k];if(v===undefined)continue;
+    if(k==='box'){f.box=(v===null||BX[v])?v:null;continue}
+    if(Array.isArray(f[k])){if(Array.isArray(v))f[k]=v.slice(0,60);continue}
+    if(typeof v===typeof f[k]&&v!==null)f[k]=v}
+  const okId=x=>typeof x==='string'&&CHM[x];
+  f.flavors=f.flavors.filter(x=>FLM[x]).slice(0,3);f.avoid=f.avoid.filter(x=>AV.some(a=>a.id===x));
+  f.tastePick=f.tastePick.filter(okId);f.favorites=f.favorites.filter(okId);
+  f.slots=f.slots.map(x=>okId(x)?x:null);
+  if(!ST.includes(f.stage))f.stage='attract';
+  if(!REC[f.recipient])f.recipient='Mother';
+  const rx={};for(const k in f.reactions)if(CHM[k]&&['love','maybe','no'].includes(f.reactions[k]))rx[k]=f.reactions[k];f.reactions=rx;
+  const tm={};for(const k in f.times)if(ST.includes(k)&&typeof f.times[k]==='number')tm[k]=f.times[k];f.times=tm;
+  if(!WR.some(x=>x.id===f.wrap))f.wrap='cream';if(!RB.some(x=>x.id===f.ribbon))f.ribbon='olive';if(!CD.some(x=>x.id===f.card))f.card='ivory';
+  if(!['active','confirmed','backstage','ready'].includes(f.status))f.status='active';f.tasteIdx=Math.max(0,Math.floor(f.tasteIdx)||0);f.maxIdx=Math.max(0,Math.min(ST.length-1,Math.floor(f.maxIdx)||0));
+  f.message=String(f.message).slice(0,140);f.from=String(f.from).slice(0,40);f.guest=String(f.guest).slice(0,40);
+  return f}
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let S=store.get('hm-state');S=S?sanitize(S):fresh();
+const L=Object.assign({hide:false,budget:0},store.get('hm-local')||{},{sel:null,last:null,modal:null,undo:null,acc:'wrap',mode:'customer',dragging:false});
+const R=()=>REC[S.recipient]||REC.Mother, who=()=>R().s, Who=()=>cap(who()), poss=()=>who()+"'s", pp=()=>R().pp;
+const persist=()=>{store.set('hm-state',S);store.set('hm-local',{hide:L.hide,budget:L.budget})};
+
+// ---------- sync: same device (tabs) + across devices (artifact room) ----------
+let room=null,peers=1,bc=null,sendT=null;
+try{bc=new BroadcastChannel('heartmade-atelier');bc.onmessage=e=>recv(e.data)}catch(e){}
+function send(){clearTimeout(sendT);sendT=setTimeout(()=>{const d=JSON.parse(JSON.stringify(S));try{bc&&bc.postMessage(d)}catch(e){}try{room&&room.emit('state',d)}catch(e){}},60)}
+function recv(d){if(!d||typeof d!=='object'||typeof d.rev!=='number')return;
+  if(d.rev>S.rev||(d.rev===S.rev&&d.ts>S.ts)){const prevSid=S.sid;S=sanitize(d);if(S.sid!==prevSid){L.sel=null;L.budget=0;L.hide=false}persist();render()}}
+(async()=>{try{if(!window.claude||!window.claude.use)return;const r=await window.claude.use('room');if(!r)return;room=r;
+  r.on('state',d=>recv(d));r.on('hello',()=>send());
+  r.onPeers(p=>{peers=Math.max(1,Array.isArray(p)?p.length:(p&&typeof p==='object'?Object.keys(p).length:1));renderSync()});
+  try{r.presence({role:L.mode})}catch(e){}try{r.emit('hello',{})}catch(e){}send();renderSync()}catch(e){}})();
+function syncLabel(){return room?(peers>1?`Live sync · ${peers} devices`:'Live sync · waiting for 2nd device'):'This device only'}
+function renderSync(){document.querySelectorAll('.sync').forEach(el=>{el.textContent=syncLabel();el.classList.toggle('live',!!room&&peers>1)})}
+
+// ---------- helpers ----------
+function commit(fn,quiet){fn(S);S.rev++;S.ts=Date.now();persist();send();if(!quiet)render()}
+function go(st){L.sel=null;commit(s=>{s.stage=st;const i=ST.indexOf(st);s.maxIdx=Math.max(s.maxIdx,i);s.times[st]=s.times[st]||Date.now()})}
+const safe=c=>!!c&&!(S.avoid.includes('nuts')&&c.nuts)&&!(S.avoid.includes('dairy')&&c.dairy)&&!(S.avoid.includes('sugar')&&c.sugar==='high');
+const curated=()=>CH.map((c,i)=>({c,i,m:c.fl.filter(f=>S.flavors.includes(f))})).filter(x=>safe(x.c)).sort((a,b)=>b.m.length-a.m.length||a.i-b.i).slice(0,6);
+const count=id=>S.slots.filter(x=>x===id).length;
+function tot(){const n=S.slots.filter(Boolean).length;let g=0,p=S.box?BX[S.box].base:0;S.slots.forEach(id=>{if(id){g+=CHM[id].g;p+=CHM[id].p}});return{n,g,p:Math.round(p),cap:S.box?BX[S.box].cap:0}}
+const money=p=>`${p} SAR`;
+const fmt=ms=>{const s=Math.max(0,Math.round(ms/1000));return s<60?`${s}s`:`${Math.floor(s/60)}m ${String(s%60).padStart(2,'0')}s`};
+const img=id=>chocURI(id,'p');
+function purge(s){s.tastePick=s.tastePick.filter(id=>safe(CHM[id]));s.favorites=s.favorites.filter(id=>safe(CHM[id]));let r=0;s.slots=s.slots.map(id=>{if(id&&!safe(CHM[id])){r++;return null}return id});return r}
+let toastT;function toast(msg,undo){const t=document.getElementById('toast');t.innerHTML=esc(msg)+(undo?' <button data-act="undo">Undo</button>':'');t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),undo?4500:2600)}
+function shake(sel){document.querySelectorAll(sel).forEach(el=>{el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake')})}
+
+// ---------- vector artwork (all visuals are drawn here — no bitmap assets) ----------
+const LOGO=(c='currentColor',sw=7)=>`<svg viewBox="0 0 100 100" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"><path d="M38 38V24a12 12 0 1 0-14 14h52a12 12 0 1 0-14-14v52a12 12 0 1 0 14-14H24a12 12 0 1 0 14 14Z"/></svg>`;
+const CHS={pistachio:{s:'sq',c:'#8b5a36',t:'pist'},raspberry:{s:'sq',c:'#c65a72',t:'speck'},caramel:{s:'sq',c:'#93603b',t:'salt'},dark:{s:'sq',c:'#4b2a1b',t:'dust'},saffron:{s:'sq',c:'#3e2216',t:'saffron'},hazelnut:{s:'bar',c:'#87542f',t:'nuts'},sfdark:{s:'bar',c:'#2e170d',t:'nibs'},orange:{s:'dome',c:'#de8838',t:'peel'},date:{s:'dome',c:'#8a5634',t:'date'},rose:{s:'dome',c:'#46261a',t:'petal'}};
+const rng=str=>{let t=0;for(const ch of str)t=(t*31+ch.charCodeAt(0))%2147483646;t=t||7;return()=>{t=(t*16807)%2147483647;return t/2147483647}};
+const f1=n=>n.toFixed(1);
+function poly(x,y,r,fill,sq,rn,n=6){const a0=rn()*6.28,p=[];for(let i=0;i<n;i++){const a=a0+i*6.283/n,rr=r*(.62+rn()*.5);p.push(f1(x+Math.cos(a)*rr)+','+f1(y+Math.sin(a)*rr*sq))}return `<polygon points="${p.join(' ')}" fill="${fill}"/>`}
+const pick=(a,rn)=>a[Math.floor(rn()*a.length)];
+function disc(rn,m=.82){let u,v;do{u=rn()*2-1;v=rn()*2-1}while(u*u+v*v>m*m);return[u,v]}
+function toppings(kind,M,k,sq,rn){let o='';const P=(u,v)=>M(u,v);
+ if(kind==='pist'){for(let i=0;i<15;i++){const[u,v]=disc(rn),[x,y]=P(u,v),r=(4.5+rn()*4)*k;o+=poly(x,y+1.6*k,r,'#5c6b28',sq,rn)+poly(x,y,r,pick(['#a5b752','#bfce72','#8c9f43','#cbd78f'],rn),sq,rn)}}
+ if(kind==='speck'){for(let i=0;i<170;i++){const[u,v]=disc(rn,1),[x,y]=P(u*1.05,v*1.05);o+=`<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1((.7+rn()*1.2)*k)}" fill="${pick(['#e38aa0','#a43a53','#f2b7c4','#b84a63','#d9667f'],rn)}" opacity=".85"/>`}}
+ if(kind==='salt'){const pts=[[-.7,.2],[-.35,-.35],[0,.15],[.35,-.3],[.7,.15]].map(([u,v])=>P(u,v));o+=`<path d="M${pts.map(p=>p.map(f1).join(' ')).join(' L')}" fill="none" stroke="#c98c4c" stroke-width="${f1(2.2*k)}" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>`;for(let i=0;i<9;i++){const[u,v]=disc(rn,.45),[x,y]=P(u,v);o+=poly(x,y,(3+rn()*2.6)*k,pick(['#fbfaf6','#f1efe9','#ffffff'],rn),sq,rn,5)}}
+ if(kind==='dust'){for(let i=0;i<260;i++){const[u,v]=disc(rn,1),[x,y]=P(u*1.04,v*1.04);o+=`<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1((.5+rn()*.9)*k)}" fill="${pick(['#6f4633','#331c12','#7d5442'],rn)}" opacity=".6"/>`}}
+ if(kind==='saffron'){const[x,y]=P(.05,-.05);o+=poly(x,y,11*k,'#c9a14b',sq,rn,9)+poly(x-1.5*k,y-1*k,7.5*k,'#e6c779',sq,rn,8)+poly(x+2*k,y,3.5*k,'#f6e3a6',sq,rn,6);for(let i=0;i<3;i++){const[a,b]=P(-.45+i*.4,.35-i*.12),[c,d]=P(-.3+i*.4,.1-i*.12);o+=`<path d="M${f1(a)} ${f1(b)} Q${f1((a+c)/2+3*k)} ${f1((b+d)/2)} ${f1(c)} ${f1(d)}" stroke="#b5301c" stroke-width="${f1(1.5*k)}" fill="none" stroke-linecap="round"/>`}}
+ if(kind==='nuts'){for(let i=0;i<22;i++){const[u,v]=disc(rn,.95),[x,y]=P(u,v),r=(3.8+rn()*3.4)*k;o+=poly(x,y+1.4*k,r,'#6e4321',sq,rn)+poly(x,y,r,pick(['#c99a5b','#b5813f','#d9ad6f'],rn),sq,rn)}}
+ if(kind==='nibs'){for(let i=0;i<10;i++){const[u,v]=disc(rn,.85),[x,y]=P(u,v),r=(3+rn()*2.6)*k;o+=poly(x,y,r,'#1b0a04',sq,rn,5)+poly(x-.8*k,y-.8*k,r*.45,'#5a3624',sq,rn,4)}}
+ if(kind==='peel'){const a=P(-.62,.12),b=P(0,-.75),c=P(.6,.05);o+=`<path d="M${a.map(f1).join(' ')} Q${b.map(f1).join(' ')} ${c.map(f1).join(' ')}" stroke="#b9561a" stroke-width="${f1(7*k)}" fill="none" stroke-linecap="round"/><path d="M${a.map(f1).join(' ')} Q${b.map(f1).join(' ')} ${c.map(f1).join(' ')}" stroke="#f4ad62" stroke-width="${f1(3*k)}" fill="none" stroke-linecap="round" transform="translate(0 ${f1(-1.4*k)})"/>`;for(let i=0;i<40;i++){const[u,v]=disc(rn,1),[x,y]=P(u,v);o+=`<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(.7*k)}" fill="#fff6e6" opacity=".55"/>`}}
+ if(kind==='date'){const[x,y]=P(0,0);o+=`<ellipse cx="${f1(x)}" cy="${f1(y+1.5*k)}" rx="${f1(14*k)}" ry="${f1(8*k*sq+2*k)}" fill="#3a170a"/><ellipse cx="${f1(x)}" cy="${f1(y)}" rx="${f1(13*k)}" ry="${f1(7.5*k*sq+2*k)}" fill="#5e2c15"/><ellipse cx="${f1(x-4*k)}" cy="${f1(y-2*k)}" rx="${f1(5*k)}" ry="${f1(2*k)}" fill="#9a5a36" opacity=".8"/>`;for(let i=0;i<9;i++){const[u,v]=disc(rn,.75),[a,b]=P(u,v);o+=`<circle cx="${f1(a)}" cy="${f1(b)}" r="${f1(1.1*k)}" fill="#93a865"/>`}}
+ if(kind==='petal'){const[x,y]=P(0,-.05),s=1.35*k;o+=`<g transform="translate(${f1(x)} ${f1(y)}) scale(${f1(s)} ${f1(s*Math.max(sq,.6))})"><path d="M0-11C13-13 17 2 4 11C0 13-5 13-7 9C-15 1-11-11 0-11Z" fill="#e7a2b3"/><path d="M0-11C13-13 17 2 4 11C9 2 8-7 0-11Z" fill="#d98aa0"/><path d="M-3 7C-1 1 1-4 4-8" stroke="#c4708a" stroke-width=".8" fill="none"/></g><circle cx="${f1(x+12*k)}" cy="${f1(y+4*k)}" r="${f1(2*k)}" fill="#d9b65f"/>`}
+ return o}
+function chocSVG(id,top){const s=CHS[id]||CHS.dark,c=s.c,rn=rng(id),u=id;
+ const defs=`<defs><linearGradient id="gl${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".65" stop-color="#fff" stop-opacity="0"/></linearGradient><radialGradient id="dm${u}" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="${shade(c,.32)}"/><stop offset=".45" stop-color="${c}"/><stop offset="1" stop-color="${shade(c,-.42)}"/></radialGradient><filter id="bl${u}" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="${top?2.2:5}"/></filter></defs>`;
+ let b='';
+ if(top){if(s.s==='dome'){b=`<circle cx="52" cy="53" r="37" fill="#000" opacity=".4" filter="url(#bl${u})"/><circle cx="50" cy="50" r="37" fill="url(#dm${u})"/>`+toppings(s.t,(x,y)=>[50+x*24,50+y*24],.5,1,rn)+`<ellipse cx="38" cy="36" rx="12" ry="6" fill="#fff" opacity=".18" transform="rotate(-35 38 36)"/>`}
+  else{const[x,y,w,h]=s.s==='bar'?[9,25,82,50]:[14,14,72,72];b=`<rect x="${x+2}" y="${y+3}" width="${w}" height="${h}" rx="9" fill="#000" opacity=".42" filter="url(#bl${u})"/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="9" fill="${shade(c,-.18)}"/><rect x="${x+4}" y="${y+4}" width="${w-8}" height="${h-8}" rx="6" fill="${shade(c,.06)}"/><rect x="${x+4}" y="${y+4}" width="${w-8}" height="${h-8}" rx="6" fill="url(#gl${u})"/>`+toppings(s.t,(p,q)=>[50+p*(w/2-9),50+q*(h/2-9)],.5,1,rn)}
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${defs}${b}</svg>`}
+ if(s.s==='dome'){b=`<ellipse cx="100" cy="152" rx="76" ry="20" fill="#000" opacity=".2" filter="url(#bl${u})"/><path d="M30 128V136A70 33 0 0 0 170 136V128Z" fill="${shade(c,-.35)}"/><path d="M30 128C30 52 170 52 170 128A70 33 0 0 1 30 128Z" fill="url(#dm${u})"/><ellipse cx="74" cy="86" rx="22" ry="9" fill="#fff" opacity=".22" transform="rotate(-24 74 86)"/>`+toppings(s.t,(p,q)=>[100+p*40,94+q*17],1,.5,rn)}
+ else{const[w,d,h]=s.s==='bar'?[122,62,34]:[92,92,40],P=(x,y,z)=>[100+(x-y)*.866,110+(x+y)*.5-z],pt=a=>a.map(p=>p.map(f1).join(',')).join(' '),W=w/2,D=d/2;
+  const top=[P(-W,-D,h),P(W,-D,h),P(W,D,h),P(-W,D,h)],lf=[P(-W,D,0),P(W,D,0),P(W,D,h),P(-W,D,h)],rf=[P(W,-D,0),P(W,D,0),P(W,D,h),P(W,-D,h)];
+  const sh=P(0,0,0);b=`<ellipse cx="${f1(sh[0])}" cy="${f1(sh[1]+34)}" rx="${s.s==='bar'?86:78}" ry="20" fill="#000" opacity=".2" filter="url(#bl${u})"/>`
+  +`<polygon points="${pt(lf)}" fill="${shade(c,-.1)}" stroke="${shade(c,-.1)}" stroke-width="5" stroke-linejoin="round"/><polygon points="${pt(rf)}" fill="${shade(c,-.32)}" stroke="${shade(c,-.32)}" stroke-width="5" stroke-linejoin="round"/><polygon points="${pt(top)}" fill="${shade(c,.1)}" stroke="${shade(c,.1)}" stroke-width="5" stroke-linejoin="round"/><polygon points="${pt(top)}" fill="url(#gl${u})"/>`
+  +`<path d="M${pt([top[3],top[2],top[1]]).replace(/ /g,' L')}" fill="none" stroke="${shade(c,.32)}" stroke-width="1.6" opacity=".55"/>`
+  +toppings(s.t,(p,q)=>P(p*(W-9),q*(D-9),h),1,.58,rn)}
+ return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 190">${defs}${b}</svg>`}
+const URI={};function chocURI(id,v){const k=id+v;return URI[k]||(URI[k]='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(chocSVG(id,v==='t')))}
+// line icons — thin forest strokes like patchi.com's iconography
+const ICO=b=>`<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${b}</svg>`;
+const FI={
+ soft:ICO('<g transform="rotate(-38 32 32)"><rect x="8" y="22" width="48" height="8.5" rx="4.25"/><rect x="8" y="33.5" width="48" height="8.5" rx="4.25"/><path d="M12.5 23.5c-2 1.8-2 5 0 6.8M12.5 35c-2 1.8-2 5 0 6.8"/></g>'),
+ rich:ICO('<path d="M32 13 53 23.5 32 34 11 23.5Z"/><path d="M11 23.5v14L32 48l21-10.5v-14M32 34v14"/><path d="M32 18.5 43.5 24 32 29.5 20.5 24Z" opacity=".5"/>'),
+ nutty:ICO('<path d="M32 23c10 0 16 8 16 17.5S41 54 32 54s-16-4-16-13.5S22 23 32 23Z"/><path d="M17.5 28c3-9 26-9 29 0M32 23v-9M25 25.5c-1.5-6 2-10 7-11.5M39 25.5c1.5-6-2-10-7-11.5"/>'),
+ fruity:ICO('<circle cx="26" cy="33" r="5.5"/><circle cx="36.5" cy="31" r="5.5"/><circle cx="46" cy="35.5" r="5.2"/><circle cx="30" cy="42" r="5.5"/><circle cx="40.5" cy="42" r="5.5"/><circle cx="35" cy="50.5" r="5.2"/><path d="M36 25c-3-6-9-8-14-6 3 5 8 7 14 6ZM36 25c3-6 9-8 14-6-3 5-8 7-14 6Z"/>'),
+ floral:ICO([0,72,144,216,288].map(a=>`<ellipse cx="32" cy="20" rx="7" ry="11.5" transform="rotate(${a} 32 32)"/>`).join('')+'<circle cx="32" cy="32" r="4"/>'),
+ bold:ICO([0,45,90,135,180,225,270,315].map(a=>`<path d="M32 31C29 24 30 14 32 9.5 34 14 35 24 32 31Z" transform="rotate(${a} 32 32)"/>`).join('')+'<circle cx="32" cy="32" r="2.5"/>')};
+const PI={wrap:ICO('<rect x="12" y="26" width="40" height="26"/><rect x="9" y="19" width="46" height="8"/><path d="M32 19v33M25 19c-6-8 3-12 7 0 4-12 13-8 7 0"/>'),
+ ribbon:ICO('<path d="M32 30c-8-10-20-12-20-3s12 7 20 3ZM32 30c8-10 20-12 20-3s-12 7-20 3Z"/><circle cx="32" cy="30" r="3.5"/><path d="M29.5 33 22 50l5-1 3 4 2-17M34.5 33 42 50l-5-1-3 4-2-17"/>'),
+ card:ICO('<rect x="10" y="17" width="44" height="31" rx="1"/><path d="M17 27h22M17 33h28M17 39h16"/><path d="M48 13l4 6M44 14l1 5" opacity=".6"/>')};
+// boxes, 3/4 view
+function obl(x,y,w,h,dx,dy,c){const P=a=>a.map(p=>p.join(',')).join(' ');return `<polygon points="${P([[x,y],[x+dx,y-dy],[x+w+dx,y-dy],[x+w,y]])}" fill="${shade(c,.12)}"/><polygon points="${P([[x+w,y],[x+w+dx,y-dy],[x+w+dx,y-dy+h],[x+w,y+h]])}" fill="${shade(c,-.14)}"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/><line x1="${x}" y1="${y+20}" x2="${x+w}" y2="${y+20}" stroke="${shade(c,-.2)}" stroke-width="1.2"/><line x1="${x+w}" y1="${y+20}" x2="${x+w+dx}" y2="${y+20-dy}" stroke="${shade(c,-.28)}" stroke-width="1.2"/>`}
+const TRAYMIX=['rose','pistachio','caramel','pistachio','caramel','pistachio','caramel','dark','hazelnut','dark','hazelnut','dark','hazelnut','dark','hazelnut','orange','date','orange','date'];
+function boxArt(id){let b='';
+ if(id==='classic'){b=`<ellipse cx="160" cy="186" rx="130" ry="14" fill="#000" opacity=".1" filter="url(#bb)"/>`+obl(30,112,200,72,48,40,'#efe5d2')+`<rect x="30" y="112" width="200" height="20" fill="#000" opacity=".03"/><g transform="translate(118 140) scale(.24)" fill="none" stroke="#b8934a" stroke-width="6" stroke-linecap="round">${LOGO('#b8934a',6).replace(/^<svg[^>]*>|<\/svg>$/g,'')}</g><line x1="30" y1="183.5" x2="230" y2="183.5" stroke="#c9a55a" stroke-width="1.5"/>`}
+ if(id==='tray'){b=`<ellipse cx="150" cy="178" rx="124" ry="22" fill="#000" opacity=".12" filter="url(#bb)"/><path d="M42 160A108 32 0 0 0 258 160V152H42Z" fill="#b8913f"/><path d="M28 112L40 152A110 34 0 0 0 260 152L272 112Z" fill="#ece8e0"/><path d="M28 112L40 152A110 34 0 0 0 150 186V156A122 44 0 0 1 28 112Z" fill="#fff" opacity=".5"/><ellipse cx="150" cy="112" rx="122" ry="44" fill="#f8f6f1"/><ellipse cx="150" cy="113" rx="106" ry="36" fill="#caa154"/><ellipse cx="150" cy="113" rx="106" ry="36" fill="none" stroke="#a8803a" stroke-width="2"/>`;
+  const ps=[];[[0,1],[.45,6],[.8,12]].forEach(([r,n],ri)=>{for(let i=0;i<n;i++){const a=i/n*6.283+ri*.3;ps.push([150+Math.cos(a)*r*94,110+Math.sin(a)*r*30])}});ps.sort((a,b)=>a[1]-b[1]);
+  ps.forEach(([x,y],i)=>{const id2=TRAYMIX[i%TRAYMIX.length];b+=`<image href="${chocURI(id2,'p')}" x="${f1(x-17)}" y="${f1(y-24)}" width="34" height="32"/>`})}
+ if(id==='celebration'){b=`<ellipse cx="160" cy="202" rx="120" ry="14" fill="#000" opacity=".1" filter="url(#bb)"/>`+cuboid(70,108,150,92,60,46,'#efe3cb','#c49a45')}
+ return `<svg viewBox="0 0 300 220" preserveAspectRatio="xMidYMid meet"><defs><filter id="bb" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="6"/></filter><linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".08"/></linearGradient></defs>${b}</svg>`}
+// hero still life: overhead Signature Tray on linen with a satin ribbon
+const HEROSLOTS=['rose','rose','rose','rose','pistachio','caramel','pistachio','caramel','pistachio','caramel','pistachio','caramel','dark','hazelnut','dark','hazelnut','dark','hazelnut','dark','hazelnut','dark','hazelnut','dark','hazelnut'];
+function heroArt(){return `<div class="hero-i"><div class="hero-tray">${boxView('tray',HEROSLOTS,1.24)}</div>
+ <div class="hero-loose"><img src="${chocURI('orange','p')}" alt=""><img src="${chocURI('saffron','p')}" alt=""></div>
+ <svg class="hero-rb" viewBox="0 0 580 748" preserveAspectRatio="none"><defs><linearGradient id="rb1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5d7a5f"/><stop offset=".45" stop-color="#8eab8c"/><stop offset=".7" stop-color="#6e8b6f"/><stop offset="1" stop-color="#4f6a51"/></linearGradient><filter id="rbs"><feDropShadow dx="0" dy="8" stdDeviation="9" flood-opacity=".18"/></filter></defs><path d="M-20 600C90 560 150 470 120 380S40 230 150 160 360 120 420 -20L470 -20C420 140 220 170 190 230S300 380 230 470 80 620-20 650Z" fill="url(#rb1)" filter="url(#rbs)"/><path d="M150 160C200 128 300 110 395 -20" stroke="#b7cdb5" stroke-width="2" fill="none" opacity=".6"/></svg></div>`}
+
+// ---------- box geometry ----------
+const POS={};
+(function(){const g=(cols,rows,W,H,cell)=>{const a=[],x0=(W-cols*cell)/2,y0=(H-rows*cell)/2;for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)a.push({x:x0+c*cell+5,y:y0+r*cell+5});return a};
+ POS.classic=g(8,2,600,190,70);POS.celebration=g(6,6,460,460,70);
+ const t=[];[[4,50,45],[8,110,22.5],[12,168,0]].forEach(([n,r,o])=>{for(let i=0;i<n;i++){const a=(o+i*360/n-90)*Math.PI/180;t.push({x:230+r*Math.cos(a)-28,y:230+r*Math.sin(a)-28})}});POS.tray=t})();
+function boxView(id,slots,k,live){const b=BX[id];return `<div class="bxw" style="width:${b.W*k}px;height:${b.H*k}px"><div class="bx bx-${id}" style="width:${b.W}px;height:${b.H}px;transform:scale(${k})">${POS[id].map((p,i)=>{const c=CHM[slots[i]];return `<div class="cup${live&&L.sel===i?' sel':''}${live&&L.last===i?' pop':''}" ${live?`data-act="slot" data-slot="${i}"`:''} style="left:${p.x}px;top:${p.y}px">${c?`<img draggable="false" src="${chocURI(c.id,'t')}" alt="${esc(c.n)}" ${live?`data-drag="slot" data-i="${i}"`:''}>`:''}</div>`}).join('')}</div></div>`}
+function place(id,at){const cap=BX[S.box].cap;let i=at;if(i==null){i=S.slots.indexOf(null);if(i<0&&S.slots.length<cap)i=S.slots.length}
+  if(i==null||i<0||i>=cap){toast(`The ${BX[S.box].n} is full — remove a piece to add another.`);shake('.bar,.bx');return false}
+  L.last=i;commit(s=>{while(s.slots.length<cap)s.slots.push(null);s.slots[i]=id});setTimeout(()=>{L.last=null},450);return true}
+function setBox(id){const pieces=S.slots.filter(Boolean),cap=BX[id].cap,drop=Math.max(0,pieces.length-cap);
+  commit(s=>{s.box=id;s.slots=Array.from({length:cap},(_,i)=>pieces[i]||null)});if(drop)toast(`${drop} piece${drop>1?'s':''} didn't fit the ${BX[id].n}.`)}
+
+// ---------- gift preview (live SVG) ----------
+function shade(hex,a){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const f=a<0?0:255,t=Math.abs(a);r=Math.round(r+(f-r)*t);g=Math.round(g+(f-g)*t);b=Math.round(b+(f-b)*t);return `rgb(${r},${g},${b})`}
+function wrapLines(t,n){const w=t.split(/\s+/).filter(Boolean),out=[];let l='';w.forEach(x=>{if((l+' '+x).trim().length>n){if(l)out.push(l);l=x}else l=(l+' '+x).trim()});if(l)out.push(l);return out}
+function bow(x,y,c){const d=shade(c,-.3);return `<g transform="translate(${x},${y})" stroke="${d}" stroke-width="1.2"><path d="M-3 3L-30 52L-17 47L-11 58L3 6Z" fill="${shade(c,-.12)}"/><path d="M3 3L28 50L15 46L8 57L-3 6Z" fill="${shade(c,-.12)}"/><path d="M0 0C-26-34-66-20-58 4C-52 20-22 12 0 0Z" fill="${c}"/><path d="M0 0C26-34 66-20 58 4C52 20 22 12 0 0Z" fill="${c}"/><path d="M-8-4C-24-18-44-14-46 0" fill="none" stroke="${shade(c,.35)}" stroke-width="2" opacity=".6"/><ellipse cx="0" cy="1" rx="11" ry="9" fill="${shade(c,-.08)}"/></g>`}
+function cuboid(x,y,w,h,dx,dy,wc,rc){const top=shade(wc,.18),side=shade(wc,-.18),bw=24,cx=x+w/2,L2=Math.hypot(dx,dy),f=bw/2/L2,t0=.5-f,t1=.5+f,P=a=>a.map(p=>p.join(',')).join(' ');
+ return `<polygon points="${P([[x,y],[x+dx,y-dy],[x+w+dx,y-dy],[x+w,y]])}" fill="${top}"/><polygon points="${P([[x+w,y],[x+w+dx,y-dy],[x+w+dx,y-dy+h],[x+w,y+h]])}" fill="${side}"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${wc}"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#sheen)"/><line x1="${x}" y1="${y+26}" x2="${x+w}" y2="${y+26}" stroke="${shade(wc,-.22)}" stroke-width="1.2"/><line x1="${x+w}" y1="${y+26}" x2="${x+w+dx}" y2="${y+26-dy}" stroke="${shade(wc,-.3)}" stroke-width="1.2"/>
+ <rect x="${cx-bw/2}" y="${y}" width="${bw}" height="${h}" fill="${rc}"/><polygon points="${P([[cx-bw/2,y],[cx+bw/2,y],[cx+bw/2+dx,y-dy],[cx-bw/2+dx,y-dy]])}" fill="${shade(rc,.12)}"/><polygon points="${P([[x+dx*t0,y-dy*t0],[x+w+dx*t0,y-dy*t0],[x+w+dx*t1,y-dy*t1],[x+dx*t1,y-dy*t1]])}" fill="${shade(rc,.12)}"/><polygon points="${P([[x+w+dx*t0,y-dy*t0],[x+w+dx*t1,y-dy*t1],[x+w+dx*t1,y-dy*t1+h],[x+w+dx*t0,y-dy*t0+h]])}" fill="${shade(rc,-.15)}"/>${bow(cx+dx/2,y-dy/2,rc)}`}
+function giftSVG(){const w=WR.find(x=>x.id===S.wrap)||WR[0],r=RB.find(x=>x.id===S.ribbon)||RB[0],b=S.box||'tray';let body='';
+ if(b==='tray'){const cx=230,cy=150,rx=150,ry=46,bt=270,wc=w.c,rc=r.c;
+  body=`<path d="M${cx-rx} ${cy}V${bt}A${rx} ${ry} 0 0 0 ${cx+rx} ${bt}V${cy}Z" fill="${wc}"/><path d="M${cx-rx} ${cy}V${bt}A${rx} ${ry} 0 0 0 ${cx+rx} ${bt}V${cy}Z" fill="url(#sheen)"/><path d="M${cx-rx} ${cy+30}A${rx} ${ry} 0 0 0 ${cx+rx} ${cy+30}" fill="none" stroke="${shade(wc,-.25)}" stroke-width="1.3"/><rect x="${cx-12}" y="${cy+ry-1}" width="24" height="${bt-cy}" fill="${rc}"/><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${shade(wc,.16)}" stroke="${shade(wc,-.15)}"/><clipPath id="lid"><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}"/></clipPath><g clip-path="url(#lid)"><rect x="${cx-12}" y="${cy-ry}" width="24" height="${ry*2}" fill="${shade(rc,.12)}"/><rect x="${cx-rx}" y="${cy-7}" width="${rx*2}" height="14" fill="${shade(rc,.12)}"/></g>${bow(cx,cy,rc)}`}
+ else if(b==='classic')body=cuboid(70,170,300,105,70,-0+48,w.c,r.c);
+ else body=cuboid(100,150,230,150,80,58,w.c,r.c);
+ const cd=S.card,lines=wrapLines(S.message||'',24).slice(0,4),cc=cd==='gold'?'#fbf3df':'#fffaf0';
+ const card=`<g transform="translate(318,214) rotate(-5)"><rect x="0" y="0" width="160" height="118" rx="6" fill="${cc}" stroke="${cd==='gold'?'#c49a45':'#d9ccb4'}" stroke-width="${cd==='gold'?3:1.2}" filter="url(#sh)"/>${cd==='gold'?'<rect x="7" y="7" width="146" height="104" rx="3" fill="none" stroke="#d8b96f" stroke-width="1"/>':''}${cd==='floral'?'<g transform="translate(138,20)"><circle r="5" fill="#e7a7b4"/><circle cx="6" cy="-4" r="5" fill="#eeb6c1"/><circle cx="-6" cy="-4" r="5" fill="#eeb6c1"/><circle cx="4" cy="6" r="5" fill="#e7a7b4"/><circle cx="-4" cy="6" r="5" fill="#e7a7b4"/><circle r="2.6" fill="#e8c15a"/></g>':''}
+ ${lines.length?lines.map((l,i)=>`<text x="14" y="${30+i*20}" font-family="Pinyon Script,cursive" font-size="17" fill="#3b3326">${esc(l)}</text>`).join(''):'<text x="14" y="34" font-family="Jost,sans-serif" font-style="italic" font-size="12" fill="#a79c86">Your message appears here</text>'}
+ ${S.from?`<text x="146" y="108" text-anchor="end" font-family="Pinyon Script,cursive" font-size="15" fill="#5a4e3a">— ${esc(S.from.slice(0,22))}</text>`:''}</g>`;
+ return `<svg viewBox="0 0 500 360" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".08"/></linearGradient><filter id="sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity=".2"/></filter></defs><ellipse cx="250" cy="318" rx="210" ry="20" fill="#7a5a30" opacity=".16"/>${body}${card}</svg>`}
+
+// ---------- customer screens ----------
+function staff(){return `<div class="staff"><button data-act="restart" aria-label="Restart experience">${I.restart}</button><button data-act="menu" aria-label="Staff menu">${I.menu}</button></div>`}
+const NAV=[['Welcome',['attract','welcome'],'welcome'],['Flavors',['flavor'],'flavor'],['Tasting',['pick','tasting'],'pick'],['Favorites',['favorites'],'favorites'],['Box',['box'],'box'],['Create',['create'],'create'],['Personalize',['personalize'],'personalize'],['Review',['review','done'],'review']];
+function nav(){const ci=ST.indexOf(S.stage);return `<nav class="nav">${NAV.map(([n,sts,to])=>{if(to==='pick'&&S.maxIdx>=ST.indexOf('tasting'))to='tasting';const cur=sts.includes(S.stage),ti=ST.indexOf(to),done=!cur&&Math.max(...sts.map(x=>ST.indexOf(x)))<ci,cl=!cur&&ti<=S.maxIdx&&S.status==='active';return `<button class="nv${cur?' cur':''}${done?' done':''}${cl?' cl':''}" ${cl?`data-act="go" data-to="${to}"`:'tabindex="-1"'}>${n}</button>`}).join('')}</nav>`}
+function hdr(withNav){return `<header class="hdr"><div class="brand"><span class="lg">${LOGO()}</span><b>HeartMade</b><span>Gifting Atelier</span></div>${withNav?nav():''}${staff()}</header>`}
+function frame(inner,noBack){const i=ST.indexOf(S.stage);return `<div class="scr page">${hdr(true)}${inner}${noBack?'':`<button class="back" data-act="go" data-to="${ST[i-1]}">${I.back}Back</button>`}</div>`}
+const nextBtn=(label,act,ok,need,extra='',sty='')=>`<button class="btn${ok?'':' dis'}" data-act="${act}" ${extra} ${sty?`style="${sty}"`:''} data-need="${esc(need||'')}">${label}</button>`;
+const tileImg=(id,cls='')=>`<div class="tile ${cls}"><img src="${img(id)}" alt=""></div>`;
+const heroImg='';
+
+const SCR={
+attract:()=>`<div class="scr" data-act="go" data-to="welcome">${hdr(false)}<div class="hero"><div class="hero-t"><div class="hero-k">Patchi · The HeartMade Gifting Atelier</div><h1 class="hero-h">Welcome to the HeartMade Gifting Atelier</h1><p class="hero-p">A personal chocolate gift, composed with you at the counter — tasted, arranged and wrapped by hand by your atelier host.</p><button class="hero-b" data-act="go" data-to="welcome">Begin ${I.arrow}</button><div class="hero-f"><span>${esc(S.occasion)} gift for ${esc(Who())}</span><span class="tapl">Tap anywhere to begin</span></div></div>${heroArt()}</div></div>`,
+welcome:()=>`<div class="scr">${hdr(true)}<div class="hero"><div class="hero-t"><div class="hero-k">${esc(S.occasion)} gift${S.guest?` · with ${esc(S.guest)}`:''}</div><h1 class="hero-h">Let’s create a special gift for ${esc(Who())}</h1><p class="hero-p">Tell us what ${esc(who())} enjoys, taste a few chocolates, then arrange and wrap ${esc(pp())} gift together with your host.</p><button class="hero-b" data-act="go" data-to="flavor">Discover ${esc(pp())} favorites ${I.arrow}</button><div class="hero-f"><span>About 20 minutes · tasting included</span><button data-act="go" data-to="attract">${I.back}Back</button></div></div>${heroArt()}</div></div>`,
+flavor:()=>frame(`<h2 class="ttl">What does ${esc(who())} usually enjoy?</h2><p class="sub">Choose up to 3 flavors.</p>
+ <div class="fgrid">${FL.map(f=>{const on=S.flavors.includes(f.id);return `<button class="card fcard${on?' on':''}" data-act="flv" data-id="${f.id}" aria-pressed="${on}"><div class="tile ic">${FI[f.id]}</div><span>${f.n}</span>${on?`<i class="chk">${I.check}</i>`:''}</button>`}).join('')}</div>
+ <div class="avoid"><h3>Any preference to avoid?</h3><p>Allergies and dietary needs shape the chocolates offered for tasting.</p><div class="chips">${AV.map(a=>`<button class="chip${S.avoid.includes(a.id)?' on':''}" data-act="avd" data-id="${a.id}">${a.n.replace('- ','-')}</button>`).join('')}</div></div>
+ ${nextBtn(`Next ${I.arrow}`,'go',S.flavors.length,'Choose at least one flavor first','data-to="pick"')}`),
+pick:()=>{const cu=curated(),min=Math.min(3,cu.length),n=S.tastePick.length,av=S.avoid.map(a=>({nuts:'nut-free',dairy:'dairy-free',sugar:'reduced-sugar'})[a]);
+ return frame(`<h2 class="ttl">Choose chocolates to taste</h2><p class="sub">Select 3–6 pieces, curated from ${esc(poss())} flavor profile.</p>${av.length?`<p class="note">Showing ${av.join(', ')} pieces only.</p>`:''}
+ <div class="pgrid">${cu.map(({c,m})=>{const on=S.tastePick.includes(c.id);return `<button class="card pcard${on?' on':''}" data-act="tpick" data-id="${c.id}">${tileImg(c.id)}<div class="pt">${m.length?`<em>${esc(m.map(x=>FLM[x]).join(' · '))}</em>`:''}<b>${c.n}</b></div>${on?`<i class="ringon">${I.check}</i>`:'<i class="ring"></i>'}</button>`}).join('')}</div>
+ ${nextBtn(`Request tasting ${I.arrow}`,'reqt',n>=min&&n>0,`Choose at least ${min} chocolates to taste`)}`)},
+tasting:()=>{const ids=S.tastePick;if(!ids.length)return frame(`<div class="empty">No chocolates chosen yet.<br><br><button class="tl" data-act="go" data-to="pick">Choose chocolates to taste</button></div>`);
+ const i=Math.min(S.tasteIdx,ids.length-1),c=CHM[ids[i]],r=S.reactions[c.id],last=i===ids.length-1,al=[c.nuts?'Contains nuts':'',c.dairy?'Contains dairy':'Dairy-free',c.sugar==='low'?'Low sugar':''].filter(Boolean);
+ const RI={love:I.heartf,maybe:I.thumbs,no:I.xs};
+ return frame(`<h2 class="ttl">Guided tasting</h2><p class="sub">Taste each piece with your host, then tell us how it felt.</p><div class="tast"><div class="tile"><img class="heroc" src="${img(c.id)}" alt="" key="${c.id}"></div></div>
+ <div class="tinfo"><div class="cnt">Guided tasting · ${i+1} of ${ids.length}</div><h3>${c.n}</h3><p>${c.d}</p><div class="tags">${c.fl.map(f=>`<span class="tag">${FLM[f]}</span>`).join('')}${al.map(a=>`<span class="tag al">${a}</span>`).join('')}</div></div>
+ <div class="rlbl">After tasting, how did it feel?</div>
+ <div class="react">${[['love',I.heart,`${esc(Who())} would<br>love this`],['maybe',I.thumb,'Maybe'],['no',I.x,`Not for<br>${esc(who())}`]].map(([k,ic,t])=>`<button class="card rcard${r===k?' on':''}" data-act="react" data-r="${k}" data-id="${c.id}">${ic}<span>${t}</span></button>`).join('')}</div>
+ <div class="tstrip">${ids.map((id,j)=>`<button class="tth${j===i?' cur':''}" data-act="tidx" data-i="${j}" aria-label="${esc(CHM[id].n)}"><img src="${img(id)}" alt="">${S.reactions[id]?`<i>${RI[S.reactions[id]]}</i>`:''}</button>`).join('')}</div>
+ ${nextBtn(`${last?'See favorites':'Next chocolate'} ${I.arrow}`,'tnext',!!r,`Choose a reaction for ${c.n} first`)}`)},
+favorites:()=>{const loved=S.tastePick.filter(id=>S.reactions[id]==='love'),maybe=S.tastePick.filter(id=>S.reactions[id]==='maybe'),extra=S.favorites.filter(id=>!loved.includes(id)&&!maybe.includes(id));
+ const main=[...loved,...extra];
+ return frame(`<h2 class="ttl">${esc(cap(poss()))} favorites</h2><p class="sub">The chocolates you loved for ${esc(who())}. Tap to include or leave out.</p>
+ ${main.length?`<div class="fvrow${main.length>4?' many':''}">${main.map(id=>{const on=S.favorites.includes(id);return `<button class="card fv${on?' on':''}" data-act="fav" data-id="${id}">${tileImg(id)}<b>${CHM[id].n}</b>${on?`<i class="ringon">${I.check}</i>`:'<i class="ring"></i>'}</button>`}).join('')}</div>`:`<div class="empty">No “${esc(who())} would love this” reactions yet. Include a maybe below, or taste a few more.</div>`}
+ ${maybe.length?`<div class="mayb"><span>Maybes</span>${maybe.map(id=>`<button class="mb${S.favorites.includes(id)?' on':''}" data-act="fav" data-id="${id}"><img src="${img(id)}" alt="">${CHM[id].n}${S.favorites.includes(id)?' ✓':''}</button>`).join('')}</div>`:''}
+ <button class="addmore" data-act="go" data-to="pick">+ Add more from tasting</button>
+ ${nextBtn(`Choose arrangement ${I.arrow}`,'go',S.favorites.length,'Select at least one favorite','data-to="box"')}`)},
+box:()=>{const b=S.box&&BX[S.box],t=tot();
+ return frame(`<h2 class="ttl">Choose ${esc(pp())} arrangement</h2><p class="sub">Select the gift vessel for ${esc(who())}.</p>
+ <div class="bgrid">${BXO.map(id=>`<button class="card bcard${S.box===id?' on':''}" data-act="box" data-id="${id}"><div class="tile bxart">${boxArt(id)}</div><div class="bt"><b>${BX[id].n}</b><small>${BX[id].cap} pieces</small></div>${S.box===id?`<i class="chk">${I.check}</i>`:''}</button>`).join('')}</div>
+ ${b?`<div class="card bprev">${boxView(S.box,S.slots,S.box==='classic'?.36:.27)}<div><b>${b.n}</b> — ${b.cap} pieces in ${b.desc}.<br>${t.n?`${t.n} piece${t.n>1?'s':''} already arranged · `:''}Holds ≈ ${Math.round(b.cap*12.3)} g when full.</div></div>`:''}
+ ${nextBtn(`Create the gift ${I.arrow}`,'go',!!S.box,'Choose a box first','data-to="create"')}`)},
+create:()=>{if(!S.box)return frame(`<div class="empty">Choose a box first.<br><br><button class="tl" data-act="go" data-to="box">Choose arrangement</button></div>`);
+ const b=BX[S.box],t=tot(),pct=Math.round(t.n/b.cap*100),lab=t.n===0?'Empty':pct>=100?'Full':pct>=75?'Nearly full':pct>=40?'Half full':'Filling up';
+ const favs=S.favorites.filter(id=>safe(CHM[id])),others=CH.filter(c=>safe(c)&&!favs.includes(c.id)).map(c=>c.id);
+ const row=id=>{const c=CHM[id],n=count(id);return `<div class="prow${L.sel!=null?' rep':''}" data-act="add" data-id="${id}" data-drag="pal"><img src="${img(id)}" alt=""><span>${c.n}</span><div class="stp"><button data-act="dec" data-id="${id}" class="${n?'':'off'}" aria-label="Fewer">−</button><b>${n}</b><button data-act="add" data-id="${id}" class="${t.n<b.cap?'':'off'}" aria-label="More">+</button></div></div>`};
+ const s=L.sel,sc=s!=null&&CHM[S.slots[s]];
+ const bk=S.box==='classic'?.98:S.box==='celebration'?.76:.78;
+ let bud='';if(L.budget){const d=L.budget-t.p;bud=`<div class="bud">${d>=0?`<span class="ok">Within ${L.budget} SAR budget</span>`:`<span class="ov">${-d} SAR over budget</span>`} <button data-act="budget">edit</button></div>`}else bud=`<div class="bud"><button data-act="budget">Set a private budget</button></div>`;
+ return frame(`<h2 class="ttl">Create the gift</h2><p class="sub">Tap or drag chocolates into the ${b.n.toLowerCase()}.</p>
+ <div class="tools"><button class="tl" data-act="autofill">Fill with favorites</button><button class="tl" data-act="clear">Clear</button></div>
+ <div class="cl-left">${boxView(S.box,S.slots,bk,true)}<div class="hint">${s!=null?`<div class="selbar">${sc?`<img src="${img(sc.id)}" alt=""><b>${sc.n}</b><button class="sb" data-act="rm">Remove</button><span>or tap a chocolate to replace</span>`:`<span>Empty spot selected — tap a chocolate to place it here</span>`}<button class="sb dk" data-act="desel">Done</button></div>`:(t.n?'Tap a piece to remove or replace it · drag pieces to rearrange':'Tap a chocolate to add it, or drag it into a spot in the box')}</div></div>
+ <div class="card panel"><h3>Build ${esc(pp())} selection</h3>${favs.length?`<div class="sec">${esc(cap(poss()))} favorites</div>${favs.map(row).join('')}`:''}${others.length?`<div class="sec">More from the atelier</div>${others.map(row).join('')}`:''}</div>
+ <div class="card stats"><div class="st">${I.bag}<div><small>Weight</small><b>≈ ${t.g} g</b></div></div><i class="vr"></i><div class="st">${I.coins}<div><small>Live price <button class="eye" data-act="hide">${L.hide?'Show':'Hide'}</button></small><b>${L.hide?'••••':money(t.p)}</b>${bud}</div></div></div>
+ <div class="fill"><span>Fill level</span><div class="bar${pct>=100?' full':''}"><i style="width:${pct}%"></i></div><span>${lab}</span></div><div class="fillsub">${t.n} of ${b.cap} pieces</div>
+ <div class="fnote">Sample weights and prices for testing — simulated, not official Patchi prices.</div>
+ ${nextBtn(`Personalize ${I.arrow}`,'go',t.n>0,'Add at least one chocolate first','data-to="personalize"')}`,false)},
+personalize:()=>{const t=tot(),w=WR.find(x=>x.id===S.wrap),r=RB.find(x=>x.id===S.ribbon),cd=CD.find(x=>x.id===S.card),A=L.acc;
+ const sec=(id,icon,title,val,body)=>`<div class="card${A===id?' on':''}"><button class="ah" data-act="acc" data-id="${id}"><span class="tile ic">${PI[icon]}</span><b>${title}</b><small>${val}</small></button>${A===id?`<div class="ab">${body}</div>`:''}</div>`;
+ return frame(`<h2 class="ttl">Personalize the gift</h2><p class="sub">Choose the wrapping, ribbon and card — the preview updates as you go.</p>
+ <div class="pv"><span class="cap">Live preview</span><div id="gpv">${giftSVG()}</div></div>
+ <div class="acc">${sec('wrap','wrap','Wrapping',w.n,`<div class="sw">${WR.map(x=>`<button class="swb${S.wrap===x.id?' on':''}" data-act="opt" data-k="wrap" data-id="${x.id}"><i style="background:${x.c}"></i>${x.n}</button>`).join('')}</div>`)}
+ ${sec('ribbon','ribbon','Ribbon',r.n,`<div class="sw">${RB.map(x=>`<button class="swb${S.ribbon===x.id?' on':''}" data-act="opt" data-k="ribbon" data-id="${x.id}"><i style="background:${x.c}"></i>${x.n}</button>`).join('')}</div>`)}
+ ${sec('card','card','Message card',S.message?'Message added':cd.n,`<div class="cdc">${CD.map(x=>`<button class="${S.card===x.id?'on':''}" data-act="opt" data-k="card" data-id="${x.id}">${x.n}</button>`).join('')}</div><textarea class="msg" id="msg" maxlength="140" placeholder="Write a few words for ${esc(who())}…">${esc(S.message)}</textarea><div class="mrow"><input id="from" maxlength="40" placeholder="From (e.g. Your loving son)" value="${esc(S.from)}"><button data-act="suggest">Suggest a message</button></div><div class="ctr" id="ctr">${S.message.length}/140</div>`)}</div>
+ <div class="card fbar"><span>Estimated price</span><b>${L.hide?'••••':money(t.p)}</b><button class="eye" data-act="hide">${L.hide?'Show':'Hide'}</button><span class="pc">${t.n} pieces · ${S.box?BX[S.box].n:''}</span></div>
+ ${nextBtn(`Review gift ${I.arrow}`,'go',true,'','data-to="review"')}`)},
+review:()=>{const t=tot(),w=WR.find(x=>x.id===S.wrap),r=RB.find(x=>x.id===S.ribbon),cd=CD.find(x=>x.id===S.card),b=S.box&&BX[S.box];
+ const kinds=[...new Set(S.slots.filter(Boolean))];
+ const ok=t.n>0&&b;
+ return frame(`<h2 class="ttl">Review ${esc(pp())} gift</h2><p class="sub">Everything look right? Tap Edit to change anything — nothing is lost.</p>
+ <div class="card rvl">${b?boxView(S.box,S.slots,S.box==='classic'?.68:.66):''}<div class="cnts">${kinds.map(id=>`<span><img src="${img(id)}" alt="">${count(id)}× ${CHM[id].n}</span>`).join('')}</div></div>
+ <div class="card rvr">
+ <div class="rr"><span class="k">Gift for</span><span class="v">${esc(Who())} · ${esc(S.occasion)}</span></div>
+ <div class="rr"><span class="k">Box</span><span class="v">${b?`${b.n} · ${b.cap} pieces`:'Not chosen'}${b&&t.n<b.cap?`<div class="warn">${t.n} of ${b.cap} spaces filled — confirm as is or add more.</div>`:''}</span><button class="ed" data-act="go" data-to="box">Edit</button></div>
+ <div class="rr"><span class="k">Chocolates</span><span class="v">${t.n} pieces · ${kinds.length} flavor${kinds.length===1?'':'s'}</span><button class="ed" data-act="go" data-to="create">Edit</button></div>
+ <div class="rr"><span class="k">Est. weight</span><span class="v">≈ ${t.g} g</span></div>
+ <div class="rr"><span class="k">Est. price</span><span class="v">${L.hide?'Hidden':money(t.p)} <small>simulated</small></span><button class="ed" data-act="hide">${L.hide?'Show':'Hide'}</button></div>
+ <div class="rr"><span class="k">Wrapping</span><span class="v"><i class="sws" style="background:${w.c}"></i>${w.n} &nbsp; <i class="sws" style="background:${r.c}"></i>${r.n} ribbon</span><button class="ed" data-act="goacc" data-id="wrap">Edit</button></div>
+ <div class="rr"><span class="k">Message card</span><span class="v">${cd.n}${S.message?`<br><i>“${esc(S.message)}”</i>${S.from?` — ${esc(S.from)}`:''}`:'<br><small>No message</small>'}</span><button class="ed" data-act="goacc" data-id="card">Edit</button></div>
+ </div>
+ ${nextBtn('Confirm my gift','confirm',ok,'Add at least one chocolate before confirming')}`)},
+done:()=>{const st=S.status,b=S.box&&BX[S.box],t=tot(),w=WR.find(x=>x.id===S.wrap),r=RB.find(x=>x.id===S.ribbon);
+ const s2=st==='backstage'||st==='ready',s3=st==='ready';
+ return `<div class="scr">${hdr(false)}<div class="hero"><div class="hero-t"><div class="hero-k">Order confirmed</div><h1 class="hero-h">${s3?`${esc(cap(poss()))} gift is ready`:'Thank you'}</h1><p class="hero-p">${s3?'Your atelier host will hand it to you in a moment.':`${esc(cap(poss()))} gift has been sent to the atelier for preparation.`}</p><div class="ono">Order<b>${esc(S.order)}</b></div><p class="hero-p" style="margin-top:6px;font-size:15px">${b?b.n:''} · ${t.n} pieces · ${w.n} with ${r.n.toLowerCase()} ribbon</p>
+ <div class="steps"><div class="sp ok"><i>${I.check}</i>Sent to the atelier</div><div class="sp${s2?' ok':' now'}"><i>${s2?I.check:''}</i>Prepared backstage</div><div class="sp${s3?' ok':s2?' now':''}"><i>${s3?I.check:''}</i>Ready for handover</div></div>
+ <div class="hero-f"><span>Thank you for visiting the atelier</span><button data-act="restart">${I.restart}Restart experience</button></div></div>${heroArt()}</div></div>`}
+};
+
+// ---------- host console ----------
+function hostHTML(){const t=tot(),b=S.box&&BX[S.box],ci=ST.indexOf(S.stage),now=Date.now();
+ const jr=ST.map((st,i)=>{let cls=i<ci?'ok':i===ci?'now':'';if(st==='done'&&S.status!=='active')cls='ok';const t0=S.times[st],nx=ST.slice(i+1).map(x=>S.times[x]).filter(Boolean)[0];const dur=t0?(i===ci&&S.status==='active'?`<em class="clock" data-from="${t0}">${fmt(now-t0)}</em>`:nx?`<em>${fmt(nx-t0)}</em>`:''):'';return `<div class="jr ${cls}"><i></i>${STN[st]}${dur}</div>`}).join('')
+  +['Sent to backstage','Ready for handover'].map((n,i)=>{const ok=i===0?(S.status==='backstage'||S.status==='ready'):S.status==='ready';return `<div class="jr ${ok?'ok':''}"><i></i>${n}</div>`}).join('');
+ const RX={love:['love',`${esc(Who())} would love`],maybe:['maybe','Maybe'],no:['no','Not for her']};
+ const tasting=S.tastePick.length?S.tastePick.map(id=>{const r=RX[S.reactions[id]]||['wait','Awaiting'];return `<div class="tr"><img src="${img(id)}" alt=""><span>${CHM[id].n}</span><b class="rx ${r[0]}">${r[0]==='no'?'Not for '+esc(who()):r[1]}</b></div>`}).join(''):'<div class="none">Guest hasn’t chosen tasting pieces yet.</div>';
+ const kinds=[...new Set(S.slots.filter(Boolean))];
+ const w=WR.find(x=>x.id===S.wrap),r=RB.find(x=>x.id===S.ribbon),cd=CD.find(x=>x.id===S.card);
+ let order;
+ if(S.status==='active')order=`<div class="lock">${I.lock}<span>The guest’s price and any private budget stay on their screen. The total appears here once they confirm.</span></div>`;
+ else{order=`<div class="kv"><span>Order</span><b>${esc(S.order)}</b></div><div class="kv"><span>Confirmed</span><b>${new Date(S.confirmedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</b></div><div style="margin-top:8px;font-size:13px;color:var(--muted)">Payment total (simulated)</div><div class="bigp">${money(t.p)}</div>`;
+  if(S.status==='confirmed')order+=`<div class="hact"><button class="hb dk" data-act="backstage">Send to Backstage →</button></div>`;
+  else order+=`<div class="ticket"><b>Backstage ticket · ${esc(S.order)}</b><ul style="margin:6px 0 0;padding-left:18px">${b?`<li>${b.n} (${b.cap} spaces)</li>`:''}${kinds.map(id=>`<li>${count(id)}× ${CHM[id].n}</li>`).join('')}<li>${w.n} wrap · ${r.n} ribbon</li><li>${cd.n} card${S.message?`: “${esc(S.message)}”${S.from?` — ${esc(S.from)}`:''}`:' (blank)'}</li>${S.avoid.length?`<li><b>Diet note:</b> ${S.avoid.map(a=>AV.find(x=>x.id===a).n.replace('- ','-')).join(', ')}</li>`:''}</ul></div><div class="hact">${S.status==='backstage'?'<button class="hb gold" data-act="ready">Mark Ready for Handover</button>':'<b style="color:#3d5a20">✓ Handed over</b><button class="hb dk" data-act="newsess">Start Next Session</button>'}</div>`}
+ return `<div class="host"><div class="hh"><span class="lg">${LOGO()}</span><div class="t">HeartMade Atelier<small>Host console · Session ${esc(S.sid)}</small></div><div class="sp2"></div><span class="sync"></span><button class="hb" data-act="newsess">New Session</button><button class="hm" data-act="menu" aria-label="Menu">${I.menu}</button></div>
+ <div class="hcols"><div class="hcol">
+  <div class="hc"><h4><span>Session</span><button class="hb" style="padding:5px 12px;font-size:13px" data-act="newsess" data-edit="1">Edit</button></h4><div class="kv"><span>Recipient</span><b>${esc(S.recipient)} (${esc(Who())})</b></div><div class="kv"><span>Occasion</span><b>${esc(S.occasion)}</b></div><div class="kv"><span>Guest</span><b>${esc(S.guest)||'—'}</b></div><div class="kv"><span>Elapsed</span><b class="clock" data-from="${S.startedAt}" data-stop="${S.status!=='active'?S.confirmedAt:''}">${fmt((S.status!=='active'?S.confirmedAt:now)-S.startedAt)}</b></div></div>
+  <div class="hc"><h4><span>Guest journey</span><small>time per step</small></h4>${jr}</div>
+ </div><div class="hcol">
+  <div class="hc"><h4><span>Flavor profile</span></h4><div class="hchips">${S.flavors.length?S.flavors.map(f=>`<span class="hchip">${FLM[f]}</span>`).join(''):'<span class="none">Not chosen yet</span>'}</div><div style="margin:10px 0 6px;font-size:13px;font-weight:600;color:var(--muted)">Avoid / dietary</div><div class="hchips">${S.avoid.length?S.avoid.map(a=>`<span class="hchip al">⚠ ${AV.find(x=>x.id===a).n.replace('- ','-')}</span>`).join(''):'<span class="none">None noted</span>'}</div></div>
+  <div class="hc"><h4><span>Tasting</span><small>${Object.keys(S.reactions).filter(k=>S.tastePick.includes(k)).length}/${S.tastePick.length} reacted</small></h4>${S.tastingReq&&!S.tastingServed?`<div class="req"><b>Tasting plate requested — prepare ${S.tastePick.length} pieces</b><button class="hb dk" style="padding:6px 12px;font-size:13px" data-act="served">Mark served</button></div>`:S.tastingServed?'<div class="req" style="background:#e5ecd8"><b>Tasting plate served ✓</b></div>':''}${tasting}</div>
+  <div class="hc"><h4><span>Personalization</span></h4><div class="kv"><span>Wrapping</span><b><i class="sws" style="background:${w.c}"></i>${w.n}</b></div><div class="kv"><span>Ribbon</span><b><i class="sws" style="background:${r.c}"></i>${r.n}</b></div><div class="kv"><span>Card</span><b>${cd.n}</b></div>${S.message?`<div style="font-family:Lora,serif;font-style:italic;font-size:15px;margin-top:6px;background:#fffaf0;border-radius:10px;padding:8px 10px">“${esc(S.message)}”${S.from?` — ${esc(S.from)}`:''}</div>`:''}</div>
+ </div><div class="hcol">
+  <div class="hc"><h4><span>Selection &amp; arrangement</span><small>${b?`${t.n}/${b.cap} pieces`:''}</small></h4>${S.favorites.length?`<div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px">Favorites</div><div class="hchips" style="margin-bottom:10px">${S.favorites.map(id=>`<span class="hchip">♥ ${CHM[id].n}</span>`).join('')}</div>`:''}${b?`<div style="display:flex;gap:14px;align-items:center">${boxView(S.box,S.slots,S.box==='classic'?.36:.38)}<div style="flex:1">${kinds.map(id=>`<div class="kv"><span>${CHM[id].n}</span><b>${count(id)}</b></div>`).join('')||'<span class="none">Box is empty</span>'}</div></div><div class="kv" style="margin-top:8px"><span>${b.n} · est. weight</span><b>≈ ${t.g} g</b></div>`:'<span class="none">No box chosen yet</span>'}</div>
+  <div class="hc"><h4><span>Order &amp; handover</span><small>${S.status==='active'?'awaiting confirmation':S.status}</small></h4>${order}</div>
+ </div></div></div>`}
+
+// ---------- modals ----------
+function modalHTML(){const m=L.modal;if(!m)return '';
+ if(m.t==='menu')return `<div class="mbox"><h3>Staff menu</h3><p>${syncLabel()}. Open this same link on a second device for the host console — both update live. On one device, use split view.</p><div class="ml">
+  ${[['customer','Customer view','The tablet the guest uses'],['host','Host console','Employee view — no prices until confirmation'],['split','Split demo','Both views side by side on one screen']].map(([k,n,d])=>`<button class="mi${L.mode===k?' on':''}" data-act="mode" data-m="${k}"><div>${n}<small>${d}</small></div></button>`).join('')}
+  <button class="mi" data-act="restart"><div>Restart Experience<small>Clears everything for the next participant</small></div></button>
+  <button class="mi" data-act="log"><div>Copy session log<small>Choices and time per step, for your test notes</small></div></button></div><div class="mact"><button class="mbtn" data-act="close">Close</button></div></div>`;
+ if(m.t==='restart')return `<div class="mbox"><h3>Restart the experience?</h3><p>This clears every selection for the next participant. Recipient (${esc(S.recipient)}) and occasion (${esc(S.occasion)}) stay as entered by the host.</p><div class="mact"><button class="mbtn" data-act="close">Cancel</button><button class="mbtn dk" data-act="dorestart">Restart</button></div></div>`;
+ if(m.t==='budget')return `<div class="mbox"><h3>Private budget</h3><p>Only you see this. Your host never sees your budget or the live price while you create.</p><div class="mchips">${[0,150,200,250,300,400].map(v=>`<button class="${L.budget===v?'on':''}" data-act="setbud" data-v="${v}">${v?v+' SAR':'No budget'}</button>`).join('')}</div><div class="mact"><button class="mbtn" data-act="close">Done</button></div></div>`;
+ if(m.t==='session'){const d=m.d;return `<div class="mbox"><h3>${m.edit?'Edit session':'Start a new gifting session'}</h3><p>${m.edit?'Updates the guest’s screens right away.':'The guest’s tablet returns to the welcome screen.'}</p><label>Recipient</label><div class="mchips">${Object.keys(REC).map(k=>`<button class="${d.recipient===k?'on':''}" data-act="sd" data-k="recipient" data-v="${k}">${k}</button>`).join('')}</div><label>Occasion</label><div class="mchips">${OCC.map(k=>`<button class="${d.occasion===k?'on':''}" data-act="sd" data-k="occasion" data-v="${esc(k)}">${esc(k)}</button>`).join('')}</div><label for="gname">Guest first name (optional)</label><input id="gname" maxlength="40" value="${esc(d.guest)}"><div class="mact"><button class="mbtn" data-act="close">Cancel</button><button class="mbtn dk" data-act="startsess">${m.edit?'Save':'Start Session'}</button></div></div>`}
+ if(m.t==='log')return `<div class="mbox"><h3>Session log</h3><p>Copied to your clipboard if allowed — otherwise select and copy below.</p><textarea readonly>${esc(logText())}</textarea><div class="mact"><button class="mbtn dk" data-act="close">Close</button></div></div>`;
+ return ''}
+function logText(){const t=tot(),o=[`HeartMade Gifting Atelier — session ${S.sid}`,`Recipient: ${S.recipient} · Occasion: ${S.occasion}${S.guest?' · Guest: '+S.guest:''}`,`Started: ${new Date(S.startedAt).toLocaleString()}`,'','Time per step:'];
+ ST.forEach((st,i)=>{const a=S.times[st];if(!a)return;const nx=ST.slice(i+1).map(x=>S.times[x]).filter(Boolean)[0]||(S.status!=='active'?S.confirmedAt:Date.now());o.push(`  ${STN[st]}: ${fmt(nx-a)}`)});
+ o.push('',`Flavors: ${S.flavors.map(f=>FLM[f]).join(', ')||'—'}`,`Avoid: ${S.avoid.join(', ')||'—'}`,'Tasting reactions:');S.tastePick.forEach(id=>o.push(`  ${CHM[id].n}: ${S.reactions[id]||'—'}`));
+ o.push(`Favorites: ${S.favorites.map(id=>CHM[id].n).join(', ')||'—'}`,`Box: ${S.box?BX[S.box].n:'—'} · ${t.n}/${t.cap} pieces · ≈${t.g} g · ${t.p} SAR (simulated)`);
+ [...new Set(S.slots.filter(Boolean))].forEach(id=>o.push(`  ${count(id)}× ${CHM[id].n}`));
+ o.push(`Wrapping: ${S.wrap} · Ribbon: ${S.ribbon} · Card: ${S.card}`,`Message: ${S.message||'—'}${S.from?' — '+S.from:''}`,`Status: ${S.status}${S.order?' · '+S.order:''}`);return o.join('\n')}
+
+// ---------- render ----------
+const app=document.getElementById('app'),cust=document.getElementById('cust'),emp=document.getElementById('emp'),modal=document.getElementById('modal');
+function render(){
+ const ae=document.activeElement,aid=ae&&ae.id,ss=ae&&ae.selectionStart,se=ae&&ae.selectionEnd;
+ app.className='m-'+L.mode;
+ if(L.mode!=='host'){const f=SCR[S.stage]||SCR.attract;cust.innerHTML=f()}
+ if(L.mode!=='customer')emp.innerHTML=hostHTML();
+ modal.innerHTML=modalHTML();modal.classList.toggle('show',!!L.modal);
+ renderSync();fit();
+ if(aid){const el=document.getElementById(aid);if(el&&el!==document.activeElement){el.focus();try{el.setSelectionRange(ss,se)}catch(e){}}}
+}
+function fit(){[['paneC',cust],['paneE',emp]].forEach(([p,st])=>{const r=document.getElementById(p).getBoundingClientRect();if(!r.width)return;const k=Math.min(r.width/1180,r.height/820);st.style.transform=`translate(${(r.width-1180*k)/2}px,${(r.height-820*k)/2}px) scale(${k})`})}
+addEventListener('resize',fit);
+setInterval(()=>{document.querySelectorAll('.clock').forEach(el=>{if(el.dataset.stop)return;el.textContent=fmt(Date.now()-(+el.dataset.from))})},1000);
+function setMode(m){L.mode=m;L.modal=null;try{history.replaceState(null,'',m==='customer'?location.pathname+location.search:'#'+m)}catch(e){location.hash=m}render();try{room&&room.presence({role:m})}catch(e){}}
+function readHash(){const h=location.hash.slice(1);L.mode=h==='host'||h==='split'?h:'customer'}
+addEventListener('hashchange',()=>{readHash();render()});
+
+// ---------- actions ----------
+const A={
+ go:el=>{const to=el.dataset.to;if(ST.includes(to))go(to)},
+ flv:el=>{const id=el.dataset.id;if(S.flavors.includes(id))commit(s=>{s.flavors=s.flavors.filter(x=>x!==id)});else if(S.flavors.length>=3){toast('Up to 3 flavors — tap a selected one to swap it out.');shake('.fcard.on')}else commit(s=>{s.flavors.push(id)})},
+ avd:el=>{const id=el.dataset.id;let n=0;commit(s=>{s.avoid=s.avoid.includes(id)?s.avoid.filter(x=>x!==id):[...s.avoid,id];n=purge(s)});if(n)toast(`${n} piece${n>1?'s':''} removed from the box to respect this preference.`)},
+ tpick:el=>{const id=el.dataset.id;if(S.tastePick.includes(id))commit(s=>{s.tastePick=s.tastePick.filter(x=>x!==id)});else if(S.tastePick.length>=6)toast('Up to 6 chocolates per tasting.');else commit(s=>{s.tastePick.push(id)})},
+ reqt:()=>{const first=S.tastePick.findIndex(id=>!S.reactions[id]);commit(s=>{s.tastingReq=true;s.tastingServed=false;s.tasteIdx=first<0?0:first},true);toast('Tasting requested — your host is preparing the plate.');go('tasting')},
+ react:el=>{const id=el.dataset.id,r=el.dataset.r;commit(s=>{s.reactions[id]=r;if(r==='love'){if(!s.favorites.includes(id))s.favorites.push(id)}else s.favorites=s.favorites.filter(x=>x!==id)})},
+ tidx:el=>{const i=+el.dataset.i;if(i>=0&&i<S.tastePick.length)commit(s=>{s.tasteIdx=i})},
+ tnext:()=>{const ids=S.tastePick,i=Math.min(S.tasteIdx,ids.length-1);if(i<ids.length-1)return commit(s=>{s.tasteIdx=i+1});const u=ids.findIndex(id=>!S.reactions[id]);if(u>=0){commit(s=>{s.tasteIdx=u});toast(`Give a reaction for ${CHM[ids[u]].n} too.`)}else go('favorites')},
+ fav:el=>{const id=el.dataset.id;commit(s=>{s.favorites=s.favorites.includes(id)?s.favorites.filter(x=>x!==id):[...s.favorites,id]})},
+ box:el=>setBox(el.dataset.id),
+ add:el=>{const id=el.dataset.id;if(!CHM[id])return;if(L.sel!=null){const at=L.sel;L.sel=null;place(id,at)}else place(id)},
+ dec:el=>{const id=el.dataset.id,i=S.slots.lastIndexOf(id);if(i<0)return;L.sel=null;commit(s=>{s.slots[i]=null})},
+ slot:el=>{const i=+el.dataset.slot;L.sel=L.sel===i?null:i;render()},
+ rm:()=>{const i=L.sel;if(i==null)return;const id=S.slots[i];L.sel=null;L.undo=S.slots.slice();commit(s=>{s.slots[i]=null});if(id)toast(`${CHM[id].n} removed.`,true)},
+ desel:()=>{L.sel=null;render()},
+ autofill:()=>{const pool=(S.favorites.filter(id=>safe(CHM[id])).length?S.favorites.filter(id=>safe(CHM[id])):CH.filter(safe).map(c=>c.id));const cap=BX[S.box].cap;if(S.slots.filter(Boolean).length>=cap)return toast('The box is already full.');L.undo=S.slots.slice();let k=0;commit(s=>{while(s.slots.length<cap)s.slots.push(null);s.slots=s.slots.map(x=>x||pool[k++%pool.length])});toast('Filled the empty spots with favorites.',true)},
+ clear:()=>{if(!S.slots.some(Boolean))return;L.undo=S.slots.slice();L.sel=null;commit(s=>{s.slots=s.slots.map(()=>null)});toast('Box cleared.',true)},
+ undo:()=>{if(!L.undo)return;const u=L.undo;L.undo=null;commit(s=>{s.slots=u});document.getElementById('toast').classList.remove('show')},
+ hide:()=>{L.hide=!L.hide;persist();render()},
+ budget:()=>{L.modal={t:'budget'};render()},
+ setbud:el=>{L.budget=+el.dataset.v;persist();L.modal=null;render()},
+ acc:el=>{L.acc=L.acc===el.dataset.id?'':el.dataset.id;render()},
+ goacc:el=>{L.acc=el.dataset.id;go('personalize')},
+ opt:el=>{const k=el.dataset.k,v=el.dataset.id;if(['wrap','ribbon','card'].includes(k))commit(s=>{s[k]=v})},
+ suggest:()=>{const m=MSGS(who()==='Mom'?'Mom':cap(who()));const i=(m.indexOf(S.message)+1)%m.length;commit(s=>{s.message=m[i]})},
+ confirm:()=>{commit(s=>{s.status='confirmed';s.confirmedAt=Date.now();s.order='HM-'+String(Math.floor(1000+Math.random()*9000))},true);go('done')},
+ restart:()=>{L.modal={t:'restart'};render()},
+ dorestart:()=>{const k={recipient:S.recipient,occasion:S.occasion,guest:''},rev=S.rev;S=fresh(k);S.rev=rev;L.modal=null;L.sel=null;L.budget=0;L.hide=false;L.acc='wrap';commit(()=>{});toast('Ready for the next participant.')},
+ menu:()=>{L.modal={t:'menu'};render()},
+ close:()=>{L.modal=null;render()},
+ mode:el=>setMode(el.dataset.m),
+ log:()=>{const txt=logText();L.modal={t:'log'};render();try{navigator.clipboard.writeText(txt).then(()=>toast('Session log copied.'),()=>{})}catch(e){}},
+ newsess:el=>{const edit=!!el.dataset.edit;L.modal={t:'session',edit,d:{recipient:S.recipient,occasion:S.occasion,guest:edit?S.guest:''}};render()},
+ sd:el=>{const g=document.getElementById('gname');if(g)L.modal.d.guest=g.value;L.modal.d[el.dataset.k]=el.dataset.v;render()},
+ startsess:()=>{const g=document.getElementById('gname'),d=L.modal.d;d.guest=g?g.value.trim().slice(0,40):'';if(L.modal.edit){L.modal=null;commit(s=>{s.recipient=d.recipient;s.occasion=d.occasion;s.guest=d.guest})}else{const rev=S.rev;S=fresh(d);S.rev=rev;L.modal=null;L.sel=null;commit(()=>{});toast('New session started — the guest tablet is on the welcome screen.')}},
+ served:()=>commit(s=>{s.tastingServed=true}),
+ backstage:()=>{commit(s=>{s.status='backstage';s.sentAt=Date.now()});toast('Order sent to backstage preparation.')},
+ ready:()=>commit(s=>{s.status='ready';s.readyAt=Date.now()})
+};
+let suppress=false;
+document.addEventListener('click',e=>{if(suppress){suppress=false;return}const el=e.target.closest('[data-act]');if(!el)return;
+ if(el.classList.contains('dis')){if(el.dataset.need)toast(el.dataset.need);shake('.btn.dis');return}
+ const f=A[el.dataset.act];if(f){e.preventDefault();f(el)}});
+modal.addEventListener('click',e=>{if(e.target===modal){L.modal=null;render()}});
+document.addEventListener('input',e=>{const t=e.target;
+ if(t.id==='msg'||t.id==='from'){const k=t.id==='msg'?'message':'from';S[k]=t.value.slice(0,k==='message'?140:40);S.rev++;S.ts=Date.now();persist();send();const p=document.getElementById('gpv');if(p)p.innerHTML=giftSVG();const c=document.getElementById('ctr');if(c)c.textContent=S.message.length+'/140';if(L.mode==='split')emp.innerHTML=hostHTML()}});
+
+// ---------- drag & drop (touch + mouse) ----------
+const ghost=document.getElementById('ghost');let drag=null;
+document.addEventListener('dragstart',e=>e.preventDefault());
+document.addEventListener('pointerdown',e=>{const el=e.target.closest('[data-drag]');if(!el||e.target.closest('.stp')||S.stage!=='create')return;
+ const src=el.dataset.drag==='slot'?{kind:'slot',i:+el.dataset.i,id:S.slots[+el.dataset.i]}:{kind:'pal',id:el.dataset.id};if(!src.id)return;
+ drag={src,x:e.clientX,y:e.clientY,on:false,hot:null}});
+addEventListener('pointermove',e=>{if(!drag)return;
+ if(!drag.on){if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<9)return;drag.on=true;ghost.src=img(drag.src.id);ghost.style.display='block';
+  const k=cust.getBoundingClientRect().width/1180||1;ghost.style.width=Math.max(56,78*k)+'px';if(drag.src.kind==='slot'){const c=cust.querySelector(`[data-slot="${drag.src.i}"] img`);if(c)c.style.opacity='.25'}}
+ e.preventDefault();ghost.style.transform=`translate(${e.clientX-ghost.offsetWidth/2}px,${e.clientY-ghost.offsetHeight*.6}px) rotate(-6deg) scale(1.1)`;
+ const under=document.elementFromPoint(e.clientX,e.clientY),slot=under&&under.closest('[data-slot]');
+ if(drag.hot&&drag.hot!==slot)drag.hot.classList.remove('hot');if(slot){slot.classList.add('hot');drag.hot=slot}else drag.hot=null},{passive:false});
+function endDrag(e){if(!drag)return;const d=drag;drag=null;if(!d.on)return;suppress=true;setTimeout(()=>{suppress=false},60);ghost.style.display='none';
+ const under=document.elementFromPoint(e.clientX,e.clientY),slot=under&&under.closest('[data-slot]'),inBox=under&&under.closest('.bx');
+ if(slot){const j=+slot.dataset.slot;
+  if(d.src.kind==='pal'){L.sel=null;place(d.src.id,j)}
+  else if(j!==d.src.i){L.last=j;commit(s=>{const a=s.slots[d.src.i];s.slots[d.src.i]=s.slots[j]||null;s.slots[j]=a});setTimeout(()=>{L.last=null},450)} else render()}
+ else if(d.src.kind==='slot'&&!inBox){L.undo=S.slots.slice();L.sel=null;commit(s=>{s.slots[d.src.i]=null});toast(`${CHM[d.src.id].n} removed.`,true)}
+ else render()}
+addEventListener('pointerup',endDrag);addEventListener('pointercancel',e=>{if(drag&&drag.on){drag=null;ghost.style.display='none';render()}else drag=null});
+
+readHash();render();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);
+}
+</script>
+</body>
+</html>
